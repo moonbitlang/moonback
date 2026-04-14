@@ -1,0 +1,41 @@
+html {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  background: #f3f4f6;
+  color: #111827;
+}
+
+body {
+  margin: 0;
+}
+
+.shell {
+  max-width: 42rem;
+  margin: 5rem auto;
+  padding: 2rem;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: #2563eb;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+h1 {
+  margin: 0 0 1rem;
+}
+
+p {
+  line-height: 1.6;
+}
+
+code {
+  padding: 0.15rem 0.35rem;
+  background: #e5e7eb;
+  border-radius: 0.35rem;
+}

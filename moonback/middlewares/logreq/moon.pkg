@@ -1,0 +1,13 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/http",
+  "moonbitlang/async/io",
+  "hackwaly/moonback",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/env",
+}
+
+import {
+  "moonbitlang/async/http",
+  "moonbitlang/core/encoding/utf8",
+} for "test"

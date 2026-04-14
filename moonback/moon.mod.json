@@ -1,0 +1,8 @@
+{
+  "name": "hackwaly/moonback",
+  "version": "0.1.0",
+  "deps": {
+    "moonbitlang/async": "0.17.1"
+  },
+  "preferred-target": "native"
+}

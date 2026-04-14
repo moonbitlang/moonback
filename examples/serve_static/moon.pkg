@@ -1,0 +1,14 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/http",
+  "moonbitlang/async/stdio",
+  "hackwaly/moonback",
+  "hackwaly/moonback/middlewares/unstable_static",
+  "hackwaly/moonback/middlewares/logreq",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+)
