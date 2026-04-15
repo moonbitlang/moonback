@@ -2,6 +2,6 @@
 
 .tmp/
 
-/.mooncakes/
-/_build/
+.mooncakes/
+_build/
 pkg.generated.mbti

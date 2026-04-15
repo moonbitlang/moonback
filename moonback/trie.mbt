@@ -2,8 +2,8 @@
 /// Trie node for path-based routing
 /// Uses SparseArray128 indexed by first character for O(1) lookup
 /// T is the payload type stored at leaf nodes
-pub struct Trie[T] {
-  segment : String // Path segment (actual path for static nodes, param name for param nodes)
+priv struct Trie[T] {
+  segment : StringView // Path segment (actual path for static nodes, param name for param nodes)
   children : FixedArray[Array[Trie[T]]?] // Child nodes indexed by first character
   mut param_child : Trie[T]? // Parameter child node :id
   mut catch_all_child : Trie[T]? // Catch-all child node *rest
@@ -11,7 +11,7 @@ pub struct Trie[T] {
 }
 
 ///|
-fn[T] Trie::new(segment : String) -> Trie[T] {
+fn[T] Trie::new(segment : StringView) -> Trie[T] {
   {
     segment,
     children: FixedArray::make(128, None),
@@ -23,7 +23,7 @@ fn[T] Trie::new(segment : String) -> Trie[T] {
 
 ///|
 /// Create a new root trie node
-pub fn[T] Trie::root() -> Trie[T] {
+fn[T] Trie::root() -> Trie[T] {
   Trie::new("")
 }
 
@@ -31,7 +31,7 @@ pub fn[T] Trie::root() -> Trie[T] {
 /// Find or create a static child node
 fn[T] Trie::find_or_create_static_child(
   self : Trie[T],
-  segment : String,
+  segment : StringView,
 ) -> Trie[T] {
   if segment.length() == 0 {
     abort("segment cannot be empty")
@@ -68,7 +68,7 @@ fn[T] Trie::find_or_create_static_child(
 /// Find or create a param child node
 fn[T] Trie::find_or_create_param_child(
   self : Trie[T],
-  param_name : String,
+  param_name : StringView,
 ) -> Trie[T] {
   match self.param_child {
     Some(child) =>
@@ -87,7 +87,7 @@ fn[T] Trie::find_or_create_param_child(
 /// Find or create a catch-all child node
 fn[T] Trie::find_or_create_catch_all_child(
   self : Trie[T],
-  param_name : String,
+  param_name : StringView,
 ) -> Trie[T] {
   match self.catch_all_child {
     Some(child) => child
@@ -101,8 +101,8 @@ fn[T] Trie::find_or_create_catch_all_child(
 
 ///|
 /// Parse path into segments
-fn parse_path(path : String) -> Array[String] {
-  let segments : Array[String] = []
+fn parse_path(path : StringView) -> Array[StringView] {
+  let segments : Array[StringView] = []
   let len = path.length()
   let mut i = 0
 
@@ -114,7 +114,7 @@ fn parse_path(path : String) -> Array[String] {
   while i < len {
     if path.code_unit_at(i).to_int() == '/'.to_int() {
       if i > start {
-        segments.push(substring(path, start, i))
+        segments.push(path[start:i])
       }
       i = i + 1
       start = i
@@ -125,48 +125,28 @@ fn parse_path(path : String) -> Array[String] {
 
   // Add last segment
   if i > start {
-    segments.push(substring(path, start, i))
+    segments.push(path[start:i])
   }
   segments
 }
 
 ///|
-/// Helper function to get substring
-fn substring(s : String, start : Int, end : Int) -> String {
-  let buf = StringBuilder::new()
-  for i = start; i < end; i = i + 1 {
-    buf.write_char(s.code_unit_at(i).to_int().unsafe_to_char())
-  }
-  buf.to_string()
-}
-
-///|
-/// Helper function to get substring from start to end of string
-fn substring_from(s : String, start : Int) -> String {
-  substring(s, start, s.length())
-}
-
-///|
 /// Insert a payload at the given path
 /// Supports :param for path parameters and *rest for catch-all
-pub fn[T] Trie::insert(self : Trie[T], path : String, payload : T) -> Unit {
+fn[T] Trie::insert(self : Trie[T], path : StringView, payload : T) -> Unit {
   let segments = parse_path(path)
   let mut current = self
   for segment in segments {
     if segment.length() > 0 && segment.code_unit_at(0).to_int() == '*'.to_int() {
       // Catch-all parameter *rest
-      let param_name = if segment.length() > 1 {
-        substring_from(segment, 1)
-      } else {
-        "rest"
-      }
+      let param_name = if segment.length() > 1 { segment[1:] } else { "rest" }
       current = current.find_or_create_catch_all_child(param_name)
       // Catch-all must be the last segment
       break
     } else if segment.length() > 0 &&
       segment.code_unit_at(0).to_int() == ':'.to_int() {
       // Parameter :id
-      let param_name = substring_from(segment, 1)
+      let param_name = segment[1:]
       current = current.find_or_create_param_child(param_name)
     } else {
       // Static segment
@@ -178,18 +158,18 @@ pub fn[T] Trie::insert(self : Trie[T], path : String, payload : T) -> Unit {
 
 ///|
 /// Match result from trie search
-pub struct MatchResult[T] {
+priv struct MatchResult[T] {
   payload : T
-  params : Map[String, String]
+  params : Map[StringView, StringView]
 }
 
 ///|
 /// Search for a path in the trie
 /// Returns the payload and extracted parameters if found
-pub fn[T] Trie::search(self : Trie[T], path : String) -> MatchResult[T]? {
+fn[T] Trie::search(self : Trie[T], path : StringView) -> MatchResult[T]? {
   let segments = parse_path(path)
-  let params : Map[String, String] = {}
-  match self.search_recursive(segments[:], params) {
+  let params : Map[StringView, StringView] = {}
+  match self.search_recursive(segments, params) {
     Some(node) =>
       match node.payload {
         Some(payload) => Some({ payload, params })
@@ -204,8 +184,8 @@ pub fn[T] Trie::search(self : Trie[T], path : String) -> MatchResult[T]? {
 /// Returns the matched node if found
 fn[T] Trie::search_recursive(
   self : Trie[T],
-  segments : ArrayView[String],
-  params : Map[String, String],
+  segments : ArrayView[StringView],
+  params : Map[StringView, StringView],
 ) -> Trie[T]? {
   if segments.length() == 0 {
     // Reached end of path
@@ -260,7 +240,7 @@ fn[T] Trie::search_recursive(
       let rest_path = segments
         .iter()
         .intersperse("/")
-        .fold(init="", fn(acc, s) { acc + s })
+        .fold(init="", fn(acc, s) { acc + s.to_string() })
       params.set(child.segment, rest_path)
       if child.payload is Some(_) {
         return Some(child)

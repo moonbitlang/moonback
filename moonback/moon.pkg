@@ -1,7 +1,9 @@
 import {
+  "moonbitlang/core/string",
   "moonbitlang/core/immut/sorted_map" @immut/sorted_map,
   "moonbitlang/async",
   "moonbitlang/async/http",
+  "moonbitlang/async/websocket",
   "moonbitlang/async/io",
   "moonbitlang/async/socket",
 }

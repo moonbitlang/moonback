@@ -1,18 +1,21 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>moonback static middleware</title>
   <link rel="stylesheet" href="/assets/app.css">
 </head>
+
 <body>
   <main class="shell">
     <p class="eyebrow">moonback</p>
     <h1>Static Middleware Example</h1>
     <p>This page is served by <code>@static.static_</code>.</p>
     <p>Try reloading <code>/dashboard/settings</code> to see SPA history fallback.</p>
-    <p>Try <code>/api/ping</code> to hit a normal route outside the static middleware.</p>
+    <p>Try <code>/api/post/1</code> or <code>/api/fail</code> to hit a normal route outside the static middleware.</p>
   </main>
 </body>
+
 </html>

@@ -1,7 +1,7 @@
 {
   "name": "static_middleware",
   "deps": {
-    "moonbitlang/async": "0.17.1",
+    "moonbitlang/async": "0.18.0",
     "hackwaly/moonback": "0.1.0"
   },
   "preferred-target": "native"

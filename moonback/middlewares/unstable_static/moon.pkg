@@ -1,13 +1,10 @@
 import {
-  "moonbitlang/async/fs",
-  "moonbitlang/async/io",
-  "moonbitlang/async/os_error",
   "hackwaly/moonback",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/os_error",
 }
 
 import {
   "moonbitlang/async",
   "moonbitlang/async/http",
-  "moonbitlang/async/io",
-  "moonbitlang/core/encoding/utf8",
 } for "test"

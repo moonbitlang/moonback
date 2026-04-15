@@ -1,11 +1,12 @@
 ///|
-pub struct Router {
-  priv tree : Trie[Route]
+priv struct Router {
+  tree : Trie[Route]
 }
 
 ///|
 pub suberror RouterError {
-  RouteConflict(path~ : String)
+  /// Raised when route registration fails.
+  RouteConflict(path~ : StringView)
 }
 
 ///|
@@ -79,7 +80,7 @@ fn Route::add_handler(
 fn Route::add_handler_with_path(
   self : Route,
   meth : @http.RequestMethod,
-  path : String,
+  path : StringView,
   handler : Handler,
 ) -> Unit raise RouterError {
   self.add_handler(meth, handler) catch {
@@ -101,7 +102,7 @@ fn Route::add_fallback(
 ///|
 fn Route::add_fallback_with_path(
   self : Route,
-  path : String,
+  path : StringView,
   handler : Handler,
 ) -> Unit raise RouterError {
   self.add_fallback(handler) catch {
@@ -110,15 +111,15 @@ fn Route::add_fallback_with_path(
 }
 
 ///|
-pub fn Router::new() -> Router {
+fn Router::new() -> Router {
   { tree: Trie::root() }
 }
 
 ///|
 fn Router::route_for_path(
   self : Router,
-  path : String,
-) -> (Route, Map[String, String])? {
+  path : StringView,
+) -> (Route, Map[StringView, StringView])? {
   match self.tree.search(path) {
     None => None
     Some({ payload, params }) => Some((payload, params))
@@ -128,7 +129,7 @@ fn Router::route_for_path(
 ///|
 fn Router::put_route(
   self : Router,
-  path : String,
+  path : StringView,
   update : (Route) -> Unit raise RouterError,
 ) -> Unit raise RouterError {
   let route = match self.route_for_path(path) {
@@ -140,35 +141,35 @@ fn Router::put_route(
 }
 
 ///|
-pub fn Router::add_route(
+fn Router::add_route(
   self : Router,
   meth : @http.RequestMethod,
-  path : String,
+  path : StringView,
   handler : Handler,
 ) -> Unit raise RouterError {
   self.put_route(path, route => route.add_handler_with_path(meth, path, handler))
 }
 
 ///|
-pub fn Router::add_fallback_route(
+fn Router::add_fallback_route(
   self : Router,
-  path : String,
+  path : StringView,
   handler : Handler,
 ) -> Unit raise RouterError {
   self.put_route(path, route => route.add_fallback_with_path(path, handler))
 }
 
 ///|
-pub struct RouteResult {
+priv struct RouteResult {
   handler : Handler
-  params : Map[String, String]
+  params : Map[StringView, StringView]
 }
 
 ///|
-pub fn Router::route(
+fn Router::route(
   self : Router,
   meth : @http.RequestMethod,
-  path : String,
+  path : StringView,
 ) -> RouteResult? {
   match self.route_for_path(path) {
     None => None

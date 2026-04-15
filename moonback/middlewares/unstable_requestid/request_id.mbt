@@ -19,12 +19,12 @@ pub fn new(
   generator~ : () -> String,
   header? : String? = Some("X-Request-ID"),
 ) -> @moonback.Middleware {
-  @moonback.Middleware((config, next) => {
-    (req, w) => {
-      let request_id = if config.trust_proxy &&
+  @moonback.Middleware(next => {
+    (req, res) => {
+      let request_id = if req.app().config().trust_proxy &&
         header is Some(header) &&
         req.headers.get(header) is Some(id) {
-        id
+        id.to_string()
       } else {
         generator()
       }
@@ -32,9 +32,12 @@ pub fn new(
       next(
         req,
         match header {
+          None => res
           Some(header) =>
-            w.with_headers(headers => headers.set(header, request_id))
-          None => w
+            (status, headers) => {
+              headers.set(header, request_id)
+              res(status, headers)
+            }
         },
       )
     }

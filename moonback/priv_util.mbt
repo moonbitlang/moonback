@@ -2,6 +2,11 @@
 priv suberror StopResponding
 
 ///|
+priv suberror PrivUserdataKey {
+  Cookies(Map[String, String])
+}
+
+///|
 fn join_host_port(host : String, port : UInt16) -> String {
   if host.contains_char(':') {
     "[\{host}]:\{port}"
@@ -13,13 +18,13 @@ fn join_host_port(host : String, port : UInt16) -> String {
 ///|
 fn extract_host(host_port : String) -> StringView {
   match host_port.rev_split_once(":") {
-    Some((host, _)) => host.to_string()
+    Some((host, _)) => host
     None => host_port
   }
 }
 
 ///|
-fn status_code_to_reason_phrase(code : Int) -> String {
+fn status_to_reason_phrase(code : Int) -> String {
   match code {
     100 => "Continue"
     101 => "Switching Protocols"
@@ -85,5 +90,21 @@ fn status_code_to_reason_phrase(code : Int) -> String {
     510 => "Not Extended"
     511 => "Network Authentication Required"
     _ => "Unknown"
+  }
+}
+
+///|
+fn iter_optional_to_headers(headers : &ToHeaders?) -> Iter[(String, String)] {
+  match headers {
+    None => Iter::empty()
+    Some(h) => h.to_headers().iter()
+  }
+}
+
+///|
+fn split_path_search(path_search : String) -> (StringView, StringView?) {
+  match path_search.split_once("?") {
+    Some((path, search)) => (path, Some(search))
+    None => (path_search, None)
   }
 }

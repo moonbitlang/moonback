@@ -1,4 +1,5 @@
 ///|
+/// A typed key used to store and retrieve custom values from a context.
 pub struct UserdataKey[T] {
   val : Int
   box : (T) -> Error
@@ -9,15 +10,24 @@ pub struct UserdataKey[T] {
 
 ///|
 struct Context {
-  config : Config
-  peer_addr : @socket.Addr
+  app : App
+  mut conn_info : ConnectionInfo
   mut userdata : @immut/sorted_map.SortedMap[Int, Error]
+}
+
+///|
+#warnings("-unused_field")
+priv enum ConnectionInfo {
+  Mock
+  Normal(@http.Request, @http.ServerConnection, @socket.Addr)
+  Upgraded(@websocket.Conn, @socket.Addr)
 }
 
 ///|
 let _userdata_next : Ref[Int] = { val: 0 }
 
 ///|
+/// Creates a fresh userdata key with custom boxing and unboxing logic.
 pub fn[T] UserdataKey::new(
   box~ : (T) -> Error,
   unbox~ : (Error) -> T?,
@@ -28,15 +38,12 @@ pub fn[T] UserdataKey::new(
 }
 
 ///|
-fn Context::mock() -> Context {
-  {
-    config: Config::default(),
-    peer_addr: @socket.Addr::new(0, 0),
-    userdata: @immut/sorted_map.SortedMap::new(),
-  }
+fn Context::new(app : App, conn_info : ConnectionInfo) -> Context {
+  { app, conn_info, userdata: @immut/sorted_map.SortedMap::new() }
 }
 
 ///|
+/// Returns a typed userdata value previously stored under `key`.
 pub fn[T] Context::get_userdata(self : Context, key : UserdataKey[T]) -> T? {
   match self.userdata.get(key.val) {
     None => None
@@ -45,6 +52,7 @@ pub fn[T] Context::get_userdata(self : Context, key : UserdataKey[T]) -> T? {
 }
 
 ///|
+/// Stores a typed userdata value under `key`.
 pub fn[T] Context::set_userdata(
   self : Context,
   key : UserdataKey[T],

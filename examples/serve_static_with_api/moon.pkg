@@ -4,7 +4,7 @@ import {
   "moonbitlang/async/stdio",
   "hackwaly/moonback",
   "hackwaly/moonback/middlewares/unstable_static",
-  "hackwaly/moonback/middlewares/logreq",
+  "hackwaly/moonback/middlewares/unstable_logreq",
 }
 
 supported_targets = "native"

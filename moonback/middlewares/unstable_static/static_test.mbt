@@ -1,211 +1,109 @@
 ///|
-struct TestWriter {
-  mut code : Int?
-  mut headers : Map[String, String]
-  body : StringBuilder
-}
+let fixture_root = "moonback/middlewares/unstable_static/testdata"
 
 ///|
-fn TestWriter::new() -> TestWriter {
-  { code: None, headers: {}, body: StringBuilder::new() }
-}
-
-///|
-pub impl @io.Writer for TestWriter with write_once(self, buf, offset~, len~) {
-  self.body.write_string(@utf8.decode(buf[offset:offset + len]))
-  len
-}
-
-///|
-pub impl @moonback.ResponseWriter for TestWriter with write_head(
-  self,
-  code,
-  headers?,
-) {
-  self.code = Some(code)
-  self.headers = match headers {
-    Some(headers) => headers
-    None => {}
-  }
-}
-
-///|
-pub impl @moonback.ResponseWriter for TestWriter with flush(_self) {
-
-}
-
-///|
-async fn run_handler(
-  handler : @moonback.Handler,
-  meth : @http.RequestMethod,
+async fn send_request(
+  middleware : @moonback.Middleware,
   path : String,
-) -> TestWriter {
-  let (body, sink) = @io.pipe()
-  sink.close()
-  defer body.close()
-  let writer = TestWriter::new()
-  handler(
-    { ctx: @moonback.mock_context, meth, path, headers: {}, body },
-    writer,
+  extra_routes? : @moonback.Module = @moonback.Module(_ctx => ()),
+) -> (Int, String?, String) {
+  let app = @moonback.App::new(
+    @moonback.Module(ctx => {
+      ctx.add_middleware(middleware)
+      (extra_routes.0)(ctx)
+    }),
   )
-  writer
-}
-
-///|
-fn fallback_handler(name : String) -> @moonback.Handler {
-  (_, w) => {
-    w.write_head(404, headers={ "X-Fallback": name })
-    w.write("fallback:\{name}")
-  }
-}
-
-///|
-async test "serve serves index file for root path" {
+  defer app.close()
   @async.with_task_group(group => {
-    let root = @fs.tmpdir(prefix="moonback-serve-root")
-    group.add_defer(() => @fs.rmdir(root, recursive=true))
-    @fs.write_file("\{root}/index.html", "hello", create=0o644)
-
-    let writer = run_handler(
-      new(root)(@moonback.Config::default(), fallback_handler("root")),
-      Get,
-      "/",
+    let server = @moonback.listen(port=0)
+    let task = group.spawn(() => app.serve(server))
+    let (response, body) = @http.get(
+      "http://127.0.0.1:\{server.addr.port()}\{path}",
     )
-    assert_eq(writer.code, Some(200))
-    assert_eq(
-      writer.headers.get("Content-Type"),
-      Some("text/html; charset=utf-8"),
-    )
-    assert_eq(writer.body.to_string(), "hello")
+    task.cancel()
+    (response.code, response.headers.get("content-type"), body.text())
   })
 }
 
 ///|
-async test "serve strips query string and serves nested file" {
-  @async.with_task_group(group => {
-    let root = @fs.tmpdir(prefix="moonback-serve-query")
-    group.add_defer(() => @fs.rmdir(root, recursive=true))
-    @fs.mkdir("\{root}/assets", permission=0o755)
-    @fs.write_file("\{root}/assets/app.css", "body{}", create=0o644)
-
-    let writer = run_handler(
-      new(root, history_fallback=true)(
-        @moonback.Config::default(),
-        fallback_handler("query"),
-      ),
-      Get,
-      "/assets/app.css?v=1",
-    )
-    assert_eq(writer.code, Some(200))
-    assert_eq(
-      writer.headers.get("Content-Type"),
-      Some("text/css; charset=utf-8"),
-    )
-    assert_eq(writer.body.to_string(), "body{}")
-  })
+async test "static middleware serves existing file" {
+  let (code, content_type, body) = send_request(
+    new(root=fixture_root),
+    "/app.js",
+  )
+  inspect(code, content="200")
+  inspect(content_type, content="Some(\"text/javascript; charset=utf-8\")")
+  inspect(body.trim(), content="console.log('static middleware');")
 }
 
 ///|
-async test "serve can disable directory index" {
-  @async.with_task_group(group => {
-    let root = @fs.tmpdir(prefix="moonback-serve-no-index")
-    group.add_defer(() => @fs.rmdir(root, recursive=true))
-    @fs.write_file("\{root}/index.html", "hello", create=0o644)
-
-    let writer = run_handler(
-      new(root, directory_index=false)(
-        @moonback.Config::default(),
-        fallback_handler("no-index"),
-      ),
-      Get,
-      "/",
-    )
-    assert_eq(writer.code, Some(404))
-    assert_eq(writer.headers.get("X-Fallback"), Some("no-index"))
-    assert_eq(writer.body.to_string(), "fallback:no-index")
-  })
+async test "static middleware rewrites trailing slash to index" {
+  let (code, _content_type, body) = send_request(
+    new(root=fixture_root, rewrite_trailing_slash_index=true),
+    "/docs/",
+  )
+  inspect(code, content="200")
+  inspect(body.trim(), content="<h1>docs index</h1>")
 }
 
 ///|
-async test "serve supports history fallback for spa routes" {
-  @async.with_task_group(group => {
-    let root = @fs.tmpdir(prefix="moonback-serve-history")
-    group.add_defer(() => @fs.rmdir(root, recursive=true))
-    @fs.write_file("\{root}/index.html", "spa", create=0o644)
-
-    let writer = run_handler(
-      new(root, history_fallback=true)(
-        @moonback.Config::default(),
-        fallback_handler("history"),
-      ),
-      Get,
-      "/dashboard/settings",
-    )
-    assert_eq(writer.code, Some(200))
-    assert_eq(writer.body.to_string(), "spa")
-  })
+async test "static middleware falls through when trailing slash rewrite disabled" {
+  let (code, _content_type, body) = send_request(
+    new(root=fixture_root, rewrite_trailing_slash_index=false),
+    "/docs/",
+  )
+  inspect(code, content="404")
+  inspect(body, content="")
 }
 
 ///|
-async test "serve does not fallback when downstream handler returns non-404" {
-  @async.with_task_group(group => {
-    let root = @fs.tmpdir(prefix="moonback-serve-history-ok")
-    group.add_defer(() => @fs.rmdir(root, recursive=true))
-    @fs.write_file("\{root}/index.html", "spa", create=0o644)
-    let handler = new(root, history_fallback=true)(
-      @moonback.Config::default(),
-      (_r, w) => {
-        w.write_head(200, headers={ "Content-Type": "application/json" })
-        w.write("{\"message\":\"pong\"}")
-      },
-    )
-
-    let writer = run_handler(handler, Get, "/api/ping")
-    assert_eq(writer.code, Some(200))
-    assert_eq(writer.headers.get("Content-Type"), Some("application/json"))
-    assert_eq(writer.body.to_string(), "{\"message\":\"pong\"}")
-  })
+async test "static middleware serves history fallback for route path" {
+  let (code, _content_type, body) = send_request(
+    new(root=fixture_root, history_fallback=Some("/index.html")),
+    "/dashboard",
+  )
+  inspect(code, content="200")
+  inspect(body.trim(), content="<h1>root index</h1>")
 }
 
 ///|
-async test "serve does not history-fallback asset requests" {
-  @async.with_task_group(group => {
-    let root = @fs.tmpdir(prefix="moonback-serve-asset-miss")
-    group.add_defer(() => @fs.rmdir(root, recursive=true))
-    @fs.write_file("\{root}/index.html", "spa", create=0o644)
-
-    let writer = run_handler(
-      new(root, history_fallback=true)(
-        @moonback.Config::default(),
-        fallback_handler("asset-miss"),
-      ),
-      Get,
-      "/assets/app.js",
-    )
-    assert_eq(writer.code, Some(404))
-    assert_eq(writer.headers.get("X-Fallback"), Some("asset-miss"))
-    assert_eq(writer.body.to_string(), "fallback:asset-miss")
-  })
+async test "static middleware keeps next response when next is not 404" {
+  let (code, _content_type, body) = send_request(
+    new(root=fixture_root, history_fallback=Some("index.html")),
+    "/dashboard",
+    extra_routes=@moonback.Module(ctx => {
+      ctx.get("/dashboard", (_req, res) => {
+        let writer = res.respond(status=200)
+        writer.write("from route")
+      })
+    }),
+  )
+  inspect(code, content="200")
+  inspect(body, content="from route")
 }
 
 ///|
-async test "serve falls through for missing files and non-get requests" {
-  @async.with_task_group(group => {
-    let root = @fs.tmpdir(prefix="moonback-serve-fallback")
-    group.add_defer(() => @fs.rmdir(root, recursive=true))
-    let handler = new(root)(
-      @moonback.Config::default(),
-      fallback_handler("miss"),
-    )
+async test "static middleware uses history fallback when next returns 404" {
+  let (code, _content_type, body) = send_request(
+    new(root=fixture_root, history_fallback=Some("/index.html")),
+    "/dashboard",
+    extra_routes=@moonback.Module(ctx => {
+      ctx.get("/dashboard", (_req, res) => {
+        let writer = res.respond(status=404)
+        writer.write("route 404")
+      })
+    }),
+  )
+  inspect(code, content="200")
+  inspect(body.trim(), content="<h1>root index</h1>")
+}
 
-    let missing = run_handler(handler, Get, "/missing.txt")
-    assert_eq(missing.code, Some(404))
-    assert_eq(missing.headers.get("X-Fallback"), Some("miss"))
-    assert_eq(missing.body.to_string(), "fallback:miss")
-
-    let post = run_handler(handler, Post, "/missing.txt")
-    assert_eq(post.code, Some(404))
-    assert_eq(post.headers.get("X-Fallback"), Some("miss"))
-    assert_eq(post.body.to_string(), "fallback:miss")
-  })
+///|
+async test "static middleware does not use history fallback for asset-like path" {
+  let (code, _content_type, body) = send_request(
+    new(root=fixture_root, history_fallback=Some("index.html")),
+    "/missing.js",
+  )
+  inspect(code, content="404")
+  inspect(body, content="")
 }
