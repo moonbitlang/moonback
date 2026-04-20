@@ -7,7 +7,7 @@
 ///     if is_authenticated(req) {
 ///       next(req, res)
 ///     } else {
-///       res.send_void(401)
+///       res.send_void(status=401)
 ///     }
 ///   }
 /// })

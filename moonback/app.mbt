@@ -56,6 +56,11 @@ async fn AppInst::handle_request(
 
 ///|
 /// Creates an app from the root module and configuration.
+///
+/// The root module is the composition entry of the application. It can register
+/// routes directly, or assemble the app from smaller reusable modules through
+/// `ModuleContext::use_`.
+///
 /// This returns after the root module has finished loading.
 pub async fn App::new(
   root : Module,
@@ -122,7 +127,8 @@ async fn App::serve_on_connection(
 /// Starts accepting connections from `listener` and serves requests on them.
 /// This returns when serving stops or when the surrounding task is cancelled.
 ///
-/// If `take_ownership` is true, `listener.close()` is called before returning.
+/// If `take_ownership` is true (`true` by default), `listener.close()` is
+/// called / before returning.
 ///
 /// On cancellation, in-flight connections are given up to
 /// `Config.stop_timeout` seconds to finish gracefully.

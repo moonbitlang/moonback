@@ -4,11 +4,58 @@ struct ModuleContext {
 }
 
 ///|
-/// Represents a reusable application module that registers routes and hooks.
+/// A `Module` is a reusable unit of app initialization.
+///
+/// A module runs once when an `App` is created. Inside the module you use
+/// `ModuleContext` to describe one slice of the application, for example:
+///
+/// - register routes
+/// - append middlewares
+/// - mount sub-apps
+/// - register cleanup hooks with `on_close`
+///
+/// This is the main mechanism for splitting business logic into small,
+/// composable pieces. A feature such as `auth`, `admin`, `blog api`, or
+/// `payments` can each be modeled as a module and then assembled into a root
+/// module.
+///
+/// Because modules are plain values, they are easy to:
+///
+/// - compose with other modules
+/// - reuse across multiple apps
+/// - encapsulate feature-specific setup
+/// - test in isolation by creating an app from just that module
+///
+/// `Module` focuses on describing application structure, not starting the
+/// server. Server startup still happens through `App::serve`.
+///
+/// Example:
+/// ```moonbit nocheck
+/// let posts_module = Module(ctx => {
+///   ctx.get("/posts", list_posts)
+///   ctx.get("/posts/:id", show_post)
+/// })
+///
+/// let admin_module = Module(ctx => {
+///   ctx.add_middleware(require_admin)
+///   ctx.get("/users", list_users)
+/// })
+///
+/// let root = Module(ctx => {
+///   ctx.use_(posts_module)
+///   ctx.use_(admin_module)
+/// })
+///
+/// let app = @moonback.App(root)
+/// ```
 pub(all) struct Module(async (ModuleContext) -> Unit)
 
 ///|
 /// Implemented by values that can extend a module context during initialization.
+///
+/// `Module` implements this trait, so `ctx.use_(some_module)` works directly.
+/// Custom extension values can also implement `Extension` when you want to
+/// package reusable setup logic without exposing it as a raw module.
 pub(open) trait Extension {
   async initialize(self : Self, ctx : ModuleContext) -> Unit
 }
@@ -21,7 +68,8 @@ pub fn ModuleContext::on_close(self : ModuleContext, f : () -> Unit) -> Unit {
 
 ///|
 /// Mounts another app under `path`.
-/// When `take_ownership` is true, the mounted app is closed with the parent.
+/// When `take_ownership` is true (`true` by default), the mounted app is closed
+/// with the parent.
 pub fn ModuleContext::mount(
   self : ModuleContext,
   path : String,
@@ -40,6 +88,18 @@ pub fn ModuleContext::mount(
 
 ///|
 /// Applies an extension to the current module context.
+///
+/// This is the composition point for modules. The extension is initialized
+/// immediately and can keep registering routes, middlewares, mounts, and close
+/// hooks on the current app.
+///
+/// The most common use is composing feature modules:
+///
+/// ```moonbit nocheck
+/// let api = Module(ctx => ctx.get("/health", health_handler))
+///
+/// let root = Module(ctx => ctx.use_(api))
+/// ```
 pub async fn ModuleContext::use_(
   self : ModuleContext,
   ext : &Extension,
