@@ -178,3 +178,8 @@ pub impl ToHeaders for Array[(String, String)] with to_headers(self) -> Headers 
   }
   { headers, set_cookie }
 }
+
+///|
+pub impl ToHeaders for ImmutableHeaders with to_headers(self) -> Headers {
+  { headers: self.0.headers.copy(), set_cookie: self.0.set_cookie.copy() }
+}
