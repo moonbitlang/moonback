@@ -183,3 +183,11 @@ pub impl ToHeaders for Array[(String, String)] with to_headers(self) -> Headers 
 pub impl ToHeaders for ImmutableHeaders with to_headers(self) -> Headers {
   { headers: self.0.headers.copy(), set_cookie: self.0.set_cookie.copy() }
 }
+
+///|
+/// Iterates over all headers as lowercase name-value pairs.
+pub fn ImmutableHeaders::iter(
+  self : ImmutableHeaders,
+) -> Iter[(String, String)] {
+  self.0.iter()
+}
