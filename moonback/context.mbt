@@ -4,8 +4,6 @@ pub struct UserdataKey[T] {
   val : Int
   box : (T) -> Error
   unbox : (Error) -> T?
-
-  fn[T] new(box~ : (T) -> Error, unbox~ : (Error) -> T?) -> UserdataKey[T]
 }
 
 ///|
@@ -28,7 +26,7 @@ let _userdata_next : Ref[Int] = { val: 0 }
 
 ///|
 /// Creates a fresh userdata key with custom boxing and unboxing logic.
-pub fn[T] UserdataKey::new(
+pub fn[T] UserdataKey::UserdataKey(
   box~ : (T) -> Error,
   unbox~ : (Error) -> T?,
 ) -> UserdataKey[T] {

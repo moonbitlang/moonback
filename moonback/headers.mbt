@@ -3,8 +3,6 @@
 pub struct Headers {
   priv headers : Map[String, String]
   priv mut set_cookie : Array[StringView]
-
-  fn new() -> Headers
 }
 
 ///|
@@ -18,7 +16,7 @@ pub trait ToHeaders {
 
 ///|
 /// Creates an empty header collection.
-pub fn Headers::new() -> Headers {
+pub fn Headers::Headers() -> Headers {
   { headers: {}, set_cookie: [] }
 }
 
@@ -118,7 +116,7 @@ pub fn Headers::remove(self : Headers, name : String) -> Unit {
 pub fn Headers::iter(self : Headers) -> Iter[(String, String)] {
   Iter::concat(
     self.headers.iter(),
-    self.set_cookie.iter().map(cookie => ("set-cookie", cookie.to_string())),
+    self.set_cookie.iter().map(cookie => ("set-cookie", cookie.to_owned())),
   )
 }
 

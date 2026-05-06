@@ -5,7 +5,7 @@ async fn run_handler(
   request_headers? : Map[String, String] = {},
 ) -> (String?, String?) {
   let mut seen_request_id = None
-  let app = @moonback.App::new(
+  let app = @moonback.App(
     @moonback.Module(ctx => {
       ctx.add_middleware(middleware)
       ctx.get("/", (req, res) => {
@@ -32,8 +32,8 @@ async fn run_handler(
 ///|
 async test "request id middleware generates id and sets response header" {
   let (request_id, header) = run_handler(new(generator=() => "generated-id"))
-  inspect(request_id, content="Some(\"generated-id\")")
-  inspect(header, content="Some(\"generated-id\")")
+  debug_inspect(request_id, content="Some(\"generated-id\")")
+  debug_inspect(header, content="Some(\"generated-id\")")
 }
 
 ///|
@@ -43,8 +43,8 @@ async test "request id middleware trusts proxy header when enabled" {
     config=Config(trust_proxy=true),
     request_headers={ "X-Request-ID": "proxy-id" },
   )
-  inspect(request_id, content="Some(\"proxy-id\")")
-  inspect(header, content="Some(\"proxy-id\")")
+  debug_inspect(request_id, content="Some(\"proxy-id\")")
+  debug_inspect(header, content="Some(\"proxy-id\")")
 }
 
 ///|
@@ -52,6 +52,6 @@ async test "request id middleware skips response header when disabled" {
   let (request_id, header) = run_handler(
     new(generator=() => "generated-id", header=None),
   )
-  inspect(request_id, content="Some(\"generated-id\")")
-  inspect(header, content="None")
+  debug_inspect(request_id, content="Some(\"generated-id\")")
+  debug_inspect(header, content="None")
 }

@@ -240,7 +240,7 @@ fn[T] Trie::search_recursive(
       let rest_path = segments
         .iter()
         .intersperse("/")
-        .fold(init="", fn(acc, s) { acc + s.to_string() })
+        .fold(init="", fn(acc, s) { acc + s.to_owned() })
       params.set(child.segment, rest_path)
       if child.payload is Some(_) {
         return Some(child)

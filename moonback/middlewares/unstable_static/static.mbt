@@ -29,7 +29,7 @@ fn strip_query_and_fragment(path : StringView) -> String {
   if path.find("#") is Some(index) && index < end {
     end = index
   }
-  path[:end].to_string()
+  path[:end].to_owned()
 }
 
 ///|
@@ -48,7 +48,7 @@ fn normalize_relative_path(path : String) -> String? {
     match segment {
       "" | "." => ()
       ".." => return None
-      segment => segments.push(segment.to_string())
+      segment => segments.push(segment.to_owned())
     }
   }
   Some(segments.join("/"))

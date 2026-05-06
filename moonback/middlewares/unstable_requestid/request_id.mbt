@@ -24,7 +24,7 @@ pub fn new(
       let request_id = if req.app().config().trust_proxy &&
         header is Some(header) &&
         req.headers.get(header) is Some(id) {
-        id.to_string()
+        id.to_owned()
       } else {
         generator()
       }

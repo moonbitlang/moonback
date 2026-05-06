@@ -3,12 +3,12 @@ fn parse_set_cookie(str : StringView) -> @http.Cookie raise {
   guard str.find("=") is Some(name_end) else {
     fail("Invalid cookie: no '=' found")
   }
-  let name = str[:name_end].to_string()
+  let name = str[:name_end].to_owned()
   guard str[name_end + 1:].find(";") is Some(value_end) else {
-    Cookie(name, str[name_end + 1:].to_string())
+    Cookie(name, str[name_end + 1:].to_owned())
   }
   let value_end = name_end + 1 + value_end
-  let value = str[name_end + 1:value_end].to_string()
+  let value = str[name_end + 1:value_end].to_owned()
 
   let mut path = None
   let mut expires_raw = None
@@ -29,22 +29,22 @@ fn parse_set_cookie(str : StringView) -> @http.Cookie raise {
       let name = attr[:attr_name_end]
       let value = attr[attr_name_end + 1:]
       match name.to_lower() {
-        "path" => path = Some(value.to_string())
-        "expires" => expires_raw = Some(value.to_string())
+        "path" => path = Some(value.to_owned())
+        "expires" => expires_raw = Some(value.to_owned())
         "max-age" => {
           let value = @string.parse_int64(value) catch {
             _ => fail("Invalid cookie: invalid max-age")
           }
           max_age = Some(value)
         }
-        "domain" => domain = Some(value.to_string())
-        _ => extensions.push(attr.to_string())
+        "domain" => domain = Some(value.to_owned())
+        _ => extensions.push(attr.to_owned())
       }
     } else {
       match attr.to_lower() {
         "secure" => secure = true
         "httponly" => http_only = true
-        _ => extensions.push(attr.to_string())
+        _ => extensions.push(attr.to_owned())
       }
     }
 
@@ -115,7 +115,7 @@ fn parse_cookie(str : StringView) -> Map[String, String] {
     if pair.find("=") is Some(name_end) {
       let name = pair[:name_end].trim()
       if !name.is_empty() {
-        cookies[name.to_string()] = pair[name_end + 1:].trim().to_string()
+        cookies[name.to_owned()] = pair[name_end + 1:].trim().to_owned()
       }
     }
 

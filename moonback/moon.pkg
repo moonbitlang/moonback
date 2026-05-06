@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/test",
   "moonbitlang/core/string",
   "moonbitlang/core/immut/sorted_map" @immut/sorted_map,
   "moonbitlang/async",

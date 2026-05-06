@@ -4,19 +4,13 @@ pub struct Config {
   max_connections : Int? // Maximum number of concurrent connections. `None` means no limit.
   stop_timeout : Double // Grace period, in seconds, for in-flight connections during shutdown.
   trust_proxy : Bool // Whether proxy forwarding headers are trusted.
-
-  fn new(
-    max_connections? : Int,
-    stop_timeout? : Double,
-    trust_proxy? : Bool,
-  ) -> Config
 }
 
 ///|
 /// Creates a configuration value for a new application.
 /// `stop_timeout` defaults to `30` seconds.
 /// `trust_proxy` defaults to `false`.
-pub fn Config::new(
+pub fn Config::Config(
   max_connections? : Int,
   stop_timeout? : Double = 30,
   trust_proxy? : Bool = false,

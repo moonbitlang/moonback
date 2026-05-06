@@ -5,8 +5,8 @@ test "static route - single segment" {
   trie.insert("/users", "users_handler")
   let result = trie.search("/users")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "users_handler")
-  assert_eq(r.params.length(), 0)
+  @test.assert_eq(r.payload, "users_handler")
+  @test.assert_eq(r.params.length(), 0)
 }
 
 ///|
@@ -15,7 +15,7 @@ test "static route - multiple segments" {
   trie.insert("/api/v1/users", "api_users")
   let result = trie.search("/api/v1/users")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "api_users")
+  @test.assert_eq(r.payload, "api_users")
 }
 
 ///|
@@ -33,7 +33,7 @@ test "static route - root path" {
   trie.insert("/", "root_handler")
   let result = trie.search("/")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "root_handler")
+  @test.assert_eq(r.payload, "root_handler")
 }
 
 ///|
@@ -45,9 +45,9 @@ test "static route - multiple routes same prefix" {
   guard trie.search("/users") is Some(r1) else { fail("expected Some") }
   guard trie.search("/users/new") is Some(r2) else { fail("expected Some") }
   guard trie.search("/users/edit") is Some(r3) else { fail("expected Some") }
-  assert_eq(r1.payload, "users_list")
-  assert_eq(r2.payload, "users_new")
-  assert_eq(r3.payload, "users_edit")
+  @test.assert_eq(r1.payload, "users_list")
+  @test.assert_eq(r2.payload, "users_new")
+  @test.assert_eq(r3.payload, "users_edit")
 }
 
 ///|
@@ -57,8 +57,8 @@ test "param route - single param" {
   trie.insert("/users/:id", "user_detail")
   let result = trie.search("/users/123")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "user_detail")
-  assert_eq(r.params.get("id"), Some("123"))
+  @test.assert_eq(r.payload, "user_detail")
+  @test.assert_eq(r.params.get("id"), Some("123"))
 }
 
 ///|
@@ -67,9 +67,9 @@ test "param route - multiple params" {
   trie.insert("/users/:userId/posts/:postId", "user_post")
   let result = trie.search("/users/42/posts/99")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "user_post")
-  assert_eq(r.params.get("userId"), Some("42"))
-  assert_eq(r.params.get("postId"), Some("99"))
+  @test.assert_eq(r.payload, "user_post")
+  @test.assert_eq(r.params.get("userId"), Some("42"))
+  @test.assert_eq(r.params.get("postId"), Some("99"))
 }
 
 ///|
@@ -78,9 +78,9 @@ test "param route - mixed static and param" {
   trie.insert("/api/:version/users/:id/profile", "user_profile")
   let result = trie.search("/api/v2/users/abc/profile")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "user_profile")
-  assert_eq(r.params.get("version"), Some("v2"))
-  assert_eq(r.params.get("id"), Some("abc"))
+  @test.assert_eq(r.payload, "user_profile")
+  @test.assert_eq(r.params.get("version"), Some("v2"))
+  @test.assert_eq(r.params.get("id"), Some("abc"))
 }
 
 ///|
@@ -89,7 +89,7 @@ test "param route - param with special characters" {
   trie.insert("/files/:filename", "file_handler")
   let result = trie.search("/files/my-file_v2.txt")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.params.get("filename"), Some("my-file_v2.txt"))
+  @test.assert_eq(r.params.get("filename"), Some("my-file_v2.txt"))
 }
 
 ///|
@@ -99,8 +99,8 @@ test "catch-all route - basic" {
   trie.insert("/static/*filepath", "static_handler")
   let result = trie.search("/static/css/style.css")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "static_handler")
-  assert_eq(r.params.get("filepath"), Some("css/style.css"))
+  @test.assert_eq(r.payload, "static_handler")
+  @test.assert_eq(r.params.get("filepath"), Some("css/style.css"))
 }
 
 ///|
@@ -109,7 +109,7 @@ test "catch-all route - single segment" {
   trie.insert("/files/*path", "files_handler")
   let result = trie.search("/files/readme.md")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.params.get("path"), Some("readme.md"))
+  @test.assert_eq(r.params.get("path"), Some("readme.md"))
 }
 
 ///|
@@ -118,7 +118,7 @@ test "catch-all route - deep path" {
   trie.insert("/assets/*rest", "assets_handler")
   let result = trie.search("/assets/images/icons/logo.png")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.params.get("rest"), Some("images/icons/logo.png"))
+  @test.assert_eq(r.params.get("rest"), Some("images/icons/logo.png"))
 }
 
 ///|
@@ -127,7 +127,7 @@ test "catch-all route - default name" {
   trie.insert("/download/*", "download_handler")
   let result = trie.search("/download/file.zip")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.params.get("rest"), Some("file.zip"))
+  @test.assert_eq(r.params.get("rest"), Some("file.zip"))
 }
 
 ///|
@@ -139,10 +139,10 @@ test "priority - static over param" {
 
   // Static should match first
   guard trie.search("/users/new") is Some(r1) else { fail("expected Some") }
-  assert_eq(r1.payload, "users_new")
+  @test.assert_eq(r1.payload, "users_new")
   // Param should match other values
   guard trie.search("/users/123") is Some(r2) else { fail("expected Some") }
-  assert_eq(r2.payload, "users_show")
+  @test.assert_eq(r2.payload, "users_show")
 }
 
 ///|
@@ -154,14 +154,14 @@ test "priority - param over catch-all" {
   // Param should match single segment
   let result1 = trie.search("/files/test.txt")
   guard result1 is Some(r1) else { fail("expected Some") }
-  assert_eq(r1.payload, "file_by_name")
-  assert_eq(r1.params.get("name"), Some("test.txt"))
+  @test.assert_eq(r1.payload, "file_by_name")
+  @test.assert_eq(r1.params.get("name"), Some("test.txt"))
 
   // Catch-all should match multiple segments
   let result2 = trie.search("/files/dir/test.txt")
   guard result2 is Some(r2) else { fail("expected Some") }
-  assert_eq(r2.payload, "file_catch_all")
-  assert_eq(r2.params.get("path"), Some("dir/test.txt"))
+  @test.assert_eq(r2.payload, "file_catch_all")
+  @test.assert_eq(r2.params.get("path"), Some("dir/test.txt"))
 }
 
 ///|
@@ -173,9 +173,9 @@ test "priority - static over param over catch-all" {
   guard trie.search("/api/health") is Some(r1) else { fail("expected Some") }
   guard trie.search("/api/users") is Some(r2) else { fail("expected Some") }
   guard trie.search("/api/v1/users") is Some(r3) else { fail("expected Some") }
-  assert_eq(r1.payload, "health_check")
-  assert_eq(r2.payload, "resource_handler")
-  assert_eq(r3.payload, "catch_all_handler")
+  @test.assert_eq(r1.payload, "health_check")
+  @test.assert_eq(r2.payload, "resource_handler")
+  @test.assert_eq(r3.payload, "catch_all_handler")
 }
 
 ///|
@@ -199,10 +199,10 @@ test "edge case - trailing slash" {
 
   // Without trailing slash
   guard trie.search("/users") is Some(r1) else { fail("expected Some") }
-  assert_eq(r1.payload, "users_no_slash")
+  @test.assert_eq(r1.payload, "users_no_slash")
   // With trailing slash in pattern - should work since we skip empty segments
   guard trie.search("/posts") is Some(r2) else { fail("expected Some") }
-  assert_eq(r2.payload, "posts_with_slash")
+  @test.assert_eq(r2.payload, "posts_with_slash")
 }
 
 ///|
@@ -211,7 +211,7 @@ test "edge case - no leading slash" {
   trie.insert("users/list", "users_list")
   let result = trie.search("users/list")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "users_list")
+  @test.assert_eq(r.payload, "users_list")
 }
 
 ///|
@@ -223,9 +223,9 @@ test "edge case - same first char different segments" {
   guard trie.search("/users") is Some(r1) else { fail("expected Some") }
   guard trie.search("/user") is Some(r2) else { fail("expected Some") }
   guard trie.search("/username") is Some(r3) else { fail("expected Some") }
-  assert_eq(r1.payload, "users")
-  assert_eq(r2.payload, "user")
-  assert_eq(r3.payload, "username")
+  @test.assert_eq(r1.payload, "users")
+  @test.assert_eq(r2.payload, "user")
+  @test.assert_eq(r3.payload, "username")
   assert_true(trie.search("/use") is None)
 }
 
@@ -237,7 +237,7 @@ test "edge case - overwrite payload" {
 
   // Second insert should overwrite
   guard trie.search("/users") is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "second")
+  @test.assert_eq(r.payload, "second")
 }
 
 ///|
@@ -249,9 +249,9 @@ test "edge case - param at different positions" {
   guard trie.search("/x/b/c") is Some(r1) else { fail("expected Some") }
   guard trie.search("/a/x/c") is Some(r2) else { fail("expected Some") }
   guard trie.search("/a/b/x") is Some(r3) else { fail("expected Some") }
-  assert_eq(r1.payload, "first")
-  assert_eq(r2.payload, "second")
-  assert_eq(r3.payload, "third")
+  @test.assert_eq(r1.payload, "first")
+  @test.assert_eq(r2.payload, "second")
+  @test.assert_eq(r3.payload, "third")
 }
 
 ///|
@@ -263,9 +263,9 @@ test "edge case - numeric path segments" {
   guard trie.search("/v1/api") is Some(r1) else { fail("expected Some") }
   guard trie.search("/v2/api") is Some(r2) else { fail("expected Some") }
   guard trie.search("/v3/api") is Some(r3) else { fail("expected Some") }
-  assert_eq(r1.payload, "v1_api")
-  assert_eq(r2.payload, "v2_api")
-  assert_eq(r3.payload, "version_api")
+  @test.assert_eq(r1.payload, "v1_api")
+  @test.assert_eq(r2.payload, "v2_api")
+  @test.assert_eq(r3.payload, "version_api")
 }
 
 ///|
@@ -278,13 +278,13 @@ test "edge case - backtracking" {
   // Should match param_route with x=b
   let result1 = trie.search("/a/b/c")
   guard result1 is Some(r1) else { fail("expected Some") }
-  assert_eq(r1.payload, "param_route")
-  assert_eq(r1.params.get("x"), Some("b"))
+  @test.assert_eq(r1.payload, "param_route")
+  @test.assert_eq(r1.params.get("x"), Some("b"))
 
   // Should match static_route
   let result2 = trie.search("/a/b/d")
   guard result2 is Some(r2) else { fail("expected Some") }
-  assert_eq(r2.payload, "static_route")
+  @test.assert_eq(r2.payload, "static_route")
 }
 
 ///|
@@ -293,7 +293,7 @@ test "edge case - long path" {
   trie.insert("/a/b/c/d/e/f/g/h/i/j", "long_path")
   let result = trie.search("/a/b/c/d/e/f/g/h/i/j")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "long_path")
+  @test.assert_eq(r.payload, "long_path")
 
   // Partial path should not match
   assert_true(trie.search("/a/b/c/d/e") is None)
@@ -305,7 +305,7 @@ test "edge case - unicode segments" {
   trie.insert("/hello/world", "ascii")
   let result = trie.search("/hello/world")
   guard result is Some(r) else { fail("expected Some") }
-  assert_eq(r.payload, "ascii")
+  @test.assert_eq(r.payload, "ascii")
 }
 
 ///|
@@ -338,16 +338,16 @@ test "complex - realistic api routes" {
   guard trie.search("/static/js/app.js") is Some(r8) else {
     fail("expected Some")
   }
-  assert_eq(r1.payload, "list_users")
-  assert_eq(r2.payload, "get_user")
-  assert_eq(r3.payload, "user_posts")
-  assert_eq(r4.payload, "user_post")
-  assert_eq(r5.payload, "list_posts")
-  assert_eq(r6.payload, "get_post")
-  assert_eq(r7.payload, "post_comments")
-  assert_eq(r8.payload, "serve_static")
+  @test.assert_eq(r1.payload, "list_users")
+  @test.assert_eq(r2.payload, "get_user")
+  @test.assert_eq(r3.payload, "user_posts")
+  @test.assert_eq(r4.payload, "user_post")
+  @test.assert_eq(r5.payload, "list_posts")
+  @test.assert_eq(r6.payload, "get_post")
+  @test.assert_eq(r7.payload, "post_comments")
+  @test.assert_eq(r8.payload, "serve_static")
 
   // Verify params
-  assert_eq(r4.params.get("id"), Some("42"))
-  assert_eq(r4.params.get("postId"), Some("7"))
+  @test.assert_eq(r4.params.get("id"), Some("42"))
+  @test.assert_eq(r4.params.get("postId"), Some("7"))
 }

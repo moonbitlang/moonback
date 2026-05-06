@@ -70,7 +70,7 @@ pub fn new(
   @moonback.Middleware(next => {
     (req, res) => {
       if is_preflight(req) {
-        let headers = @moonback.Headers::new()
+        let headers = @moonback.Headers()
         apply_preflight_headers(
           headers, origin, methods, allow_headers, credentials, max_age,
         )

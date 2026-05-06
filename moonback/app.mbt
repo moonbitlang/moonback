@@ -10,8 +10,6 @@ priv struct AppInst {
 /// A configured application that can handle requests and serve listeners.
 pub struct App {
   priv inst : AppInst
-
-  async fn new(root : Module, config? : Config) -> App
 }
 
 ///|
@@ -62,7 +60,7 @@ async fn AppInst::handle_request(
 /// `ModuleContext::use_`.
 ///
 /// This returns after the root module has finished loading.
-pub async fn App::new(
+pub async fn App::App(
   root : Module,
   config? : Config = Config::default(),
 ) -> App {

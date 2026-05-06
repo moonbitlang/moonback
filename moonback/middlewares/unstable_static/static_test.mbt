@@ -7,7 +7,7 @@ async fn send_request(
   path : String,
   extra_routes? : @moonback.Module = @moonback.Module(_ctx => ()),
 ) -> (Int, String?, String) {
-  let app = @moonback.App::new(
+  let app = @moonback.App(
     @moonback.Module(ctx => {
       ctx.add_middleware(middleware)
       (extra_routes.0)(ctx)
@@ -31,9 +31,17 @@ async test "static middleware serves existing file" {
     new(root=fixture_root),
     "/app.js",
   )
-  inspect(code, content="200")
-  inspect(content_type, content="Some(\"text/javascript; charset=utf-8\")")
-  inspect(body.trim(), content="console.log('static middleware');")
+  debug_inspect(code, content="200")
+  debug_inspect(
+    content_type,
+    content="Some(\"text/javascript; charset=utf-8\")",
+  )
+  debug_inspect(
+    body.trim(),
+    content=(
+      #|<StringView: "console.log('static middleware');">
+    ),
+  )
 }
 
 ///|
@@ -42,8 +50,13 @@ async test "static middleware rewrites trailing slash to index" {
     new(root=fixture_root, rewrite_trailing_slash_index=true),
     "/docs/",
   )
-  inspect(code, content="200")
-  inspect(body.trim(), content="<h1>docs index</h1>")
+  debug_inspect(code, content="200")
+  debug_inspect(
+    body.trim(),
+    content=(
+      #|<StringView: "<h1>docs index</h1>">
+    ),
+  )
 }
 
 ///|
@@ -52,8 +65,13 @@ async test "static middleware falls through when trailing slash rewrite disabled
     new(root=fixture_root, rewrite_trailing_slash_index=false),
     "/docs/",
   )
-  inspect(code, content="404")
-  inspect(body, content="")
+  debug_inspect(code, content="404")
+  debug_inspect(
+    body,
+    content=(
+      #|""
+    ),
+  )
 }
 
 ///|
@@ -62,8 +80,13 @@ async test "static middleware serves history fallback for route path" {
     new(root=fixture_root, history_fallback=Some("/index.html")),
     "/dashboard",
   )
-  inspect(code, content="200")
-  inspect(body.trim(), content="<h1>root index</h1>")
+  debug_inspect(code, content="200")
+  debug_inspect(
+    body.trim(),
+    content=(
+      #|<StringView: "<h1>root index</h1>">
+    ),
+  )
 }
 
 ///|
@@ -78,8 +101,13 @@ async test "static middleware keeps next response when next is not 404" {
       })
     }),
   )
-  inspect(code, content="200")
-  inspect(body, content="from route")
+  debug_inspect(code, content="200")
+  debug_inspect(
+    body,
+    content=(
+      #|"from route"
+    ),
+  )
 }
 
 ///|
@@ -94,8 +122,13 @@ async test "static middleware uses history fallback when next returns 404" {
       })
     }),
   )
-  inspect(code, content="200")
-  inspect(body.trim(), content="<h1>root index</h1>")
+  debug_inspect(code, content="200")
+  debug_inspect(
+    body.trim(),
+    content=(
+      #|<StringView: "<h1>root index</h1>">
+    ),
+  )
 }
 
 ///|
@@ -104,6 +137,11 @@ async test "static middleware does not use history fallback for asset-like path"
     new(root=fixture_root, history_fallback=Some("index.html")),
     "/missing.js",
   )
-  inspect(code, content="404")
-  inspect(body, content="")
+  debug_inspect(code, content="404")
+  debug_inspect(
+    body,
+    content=(
+      #|""
+    ),
+  )
 }

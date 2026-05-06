@@ -17,8 +17,16 @@ fn method_name(meth : @http.RequestMethod) -> String {
 pub fn new(logger : &@io.Writer) -> @moonback.Middleware {
   @moonback.Middleware(next => {
     (req, res) => {
-      logger.write("\{method_name(req.meth)} \{req.path}")
-      next(req, res)
+      let start = @env.now()
+      let mut status = 0
+      next(req, (code, headers) => {
+        status = code
+        res.respond(status=code, headers~)
+      })
+      let elapsed = @env.now() - start
+      logger.write(
+        "[\{start}] \{method_name(req.meth)} \{req.path} -> \{status} (\{elapsed}ms)\n",
+      )
     }
   })
 }
