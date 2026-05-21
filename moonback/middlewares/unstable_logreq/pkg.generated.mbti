@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "hackwaly/moonback/middlewares/unstable_logreq"
+
+import {
+  "hackwaly/moonback",
+  "moonbitlang/async/io",
+}
+
+// Values
+pub fn new(&@io.Writer) -> @moonback.Middleware
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

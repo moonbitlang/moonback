@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "hackwaly/moonback/middlewares/unstable_cors"
+
+import {
+  "hackwaly/moonback",
+}
+
+// Values
+pub fn new(origin? : String, methods? : String, allow_headers? : String, expose_headers? : String, credentials? : Bool, max_age? : Int) -> @moonback.Middleware
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

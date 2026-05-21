@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "hackwaly/moonback/middlewares/unstable_static"
+
+import {
+  "hackwaly/moonback",
+}
+
+// Values
+pub fn new(root~ : String, rewrite_trailing_slash_index? : Bool, history_fallback? : String?) -> @moonback.Middleware
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

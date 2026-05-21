@@ -1,0 +1,142 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "hackwaly/moonback"
+
+import {
+  "moonbitlang/async/http",
+  "moonbitlang/async/io",
+  "moonbitlang/async/socket",
+  "moonbitlang/async/websocket",
+}
+
+// Values
+pub async fn default_handler(Request, Responder) -> Unit
+
+pub async fn listen(reuse_addr? : Bool, dual_stack? : Bool, host? : String, port? : UInt16) -> @http.Server
+
+// Errors
+pub suberror RouterError {
+  RouteConflict(path~ : StringView)
+}
+
+// Types and methods
+pub struct App {
+  // private fields
+}
+pub async fn App::App(Module, config? : Config) -> Self
+pub fn App::close(Self) -> Unit
+pub fn App::config(Self) -> Config
+pub async fn App::handle_request(Self, Request, Responder) -> Unit
+pub async fn App::serve(Self, &Listener, take_ownership? : Bool) -> Unit
+
+pub struct Config {
+  max_connections : Int?
+  stop_timeout : Double
+  trust_proxy : Bool
+}
+pub fn Config::Config(max_connections? : Int, stop_timeout? : Double, trust_proxy? : Bool) -> Self
+pub impl Default for Config
+
+type Context
+pub fn[T] Context::get_userdata(Self, UserdataKey[T]) -> T?
+pub fn[T] Context::set_userdata(Self, UserdataKey[T], T) -> Unit
+
+pub struct Headers {
+  // private fields
+}
+pub fn Headers::Headers() -> Self
+pub fn Headers::add(Self, String, String) -> Unit
+pub fn Headers::add_set_cookie(Self, @http.Cookie) -> Unit
+pub fn Headers::from(&ToHeaders) -> Self
+pub fn Headers::get(Self, String) -> StringView?
+pub fn Headers::get_list(Self, String) -> Array[StringView]
+pub fn Headers::iter(Self) -> Iter[(String, String)]
+pub fn Headers::remove(Self, String) -> Unit
+pub fn Headers::set(Self, String, String) -> Unit
+pub impl ToHeaders for Headers
+pub impl Default for Headers
+
+type ImmutableHeaders
+pub fn ImmutableHeaders::get(Self, String) -> StringView?
+pub fn ImmutableHeaders::get_list(Self, String) -> Array[StringView]
+pub fn ImmutableHeaders::iter(Self) -> Iter[(String, String)]
+pub impl ToHeaders for ImmutableHeaders
+
+pub(all) struct Middleware((async (Request, Responder) -> Unit) -> async (Request, Responder) -> Unit)
+pub fn Middleware::chain(ArrayView[Self]) -> Self
+pub fn Middleware::compose(Self, Self) -> Self
+pub fn Middleware::pass_through() -> Self
+
+pub(all) struct Module(async (ModuleContext) -> Unit)
+pub impl Extension for Module
+
+type ModuleContext
+pub fn ModuleContext::add_middleware(Self, Middleware) -> Unit
+pub fn ModuleContext::add_route(Self, @http.RequestMethod, String, async (Request, Responder) -> Unit) -> Unit raise RouterError
+pub fn ModuleContext::get(Self, String, async (Request, Responder) -> Unit) -> Unit raise RouterError
+pub fn ModuleContext::mount(Self, String, App, take_ownership? : Bool) -> Unit raise RouterError
+pub fn ModuleContext::on_close(Self, () -> Unit) -> Unit
+pub fn ModuleContext::post(Self, String, async (Request, Responder) -> Unit) -> Unit raise RouterError
+pub async fn ModuleContext::use_(Self, &Extension) -> Unit
+
+pub(all) struct Request {
+  ctx : Context
+  meth : @http.RequestMethod
+  path : StringView
+  search : StringView?
+  headers : ImmutableHeaders
+  params : Map[StringView, StringView]
+  body : RequestBody
+}
+pub fn Request::app(Self) -> App
+pub fn Request::cookie(Self) -> Map[String, String]
+pub fn Request::ip(Self) -> StringView?
+pub fn Request::ips(Self) -> Array[StringView]
+
+type RequestBody
+pub async fn RequestBody::binary(Self) -> Bytes
+pub async fn RequestBody::json(Self) -> Json
+pub fn RequestBody::reader(Self, no_buffer? : Bool) -> &@io.Reader raise
+pub async fn RequestBody::text(Self) -> String
+
+pub(all) struct Responder(async (Int, Headers) -> &WriteFlusher)
+pub async fn Responder::respond(Self, status? : Int, headers? : &ToHeaders) -> &WriteFlusher
+pub async fn Responder::send_html(Self, String, status? : Int, headers? : &ToHeaders) -> Unit
+pub async fn Responder::send_json(Self, Json, status? : Int, headers? : &ToHeaders, indent? : Int) -> Unit
+pub async fn Responder::send_text(Self, String, status? : Int, headers? : &ToHeaders) -> Unit
+pub async fn Responder::send_void(Self, status? : Int, headers? : &ToHeaders) -> Unit
+pub async fn Responder::upgrade(Self, Request) -> @websocket.Conn
+
+pub struct UserdataKey[T] {
+  val : Int
+  box : (T) -> Error
+  unbox : (Error) -> T?
+}
+pub fn[T] UserdataKey::UserdataKey(box~ : (T) -> Error, unbox~ : (Error) -> T?) -> Self[T]
+
+// Type aliases
+pub type Handler = async (Request, Responder) -> Unit
+
+// Traits
+pub(open) trait Extension {
+  async initialize(Self, ModuleContext) -> Unit
+}
+
+pub(open) trait Flusher {
+  async flush(Self) -> Unit
+}
+
+pub(open) trait Listener {
+  async accept(Self) -> (@http.ServerConnection, @socket.Addr)
+  close(Self) -> Unit
+}
+pub impl Listener for @http.Server
+
+pub trait ToHeaders {
+  to_headers(Self) -> Headers
+}
+pub impl ToHeaders for Array[(String, String)]
+pub impl ToHeaders for Map[String, String]
+
+pub(open) trait WriteFlusher : @io.Writer + Flusher {
+}
+

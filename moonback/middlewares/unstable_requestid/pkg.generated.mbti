@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "hackwaly/moonback/middlewares/unstable_requestid"
+
+import {
+  "hackwaly/moonback",
+}
+
+// Values
+pub fn get(@moonback.Request) -> String?
+
+pub fn new(generator~ : () -> String, header? : String?) -> @moonback.Middleware
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
