@@ -75,6 +75,7 @@ pub struct MutHeaders {
 pub fn MutHeaders::MutHeaders() -> Self
 pub fn MutHeaders::add(Self, String, String) -> Unit
 pub fn MutHeaders::add_set_cookie(Self, @http.Cookie) -> Unit
+pub fn MutHeaders::from(&ToHeaders) -> Self
 pub fn MutHeaders::get(Self, String) -> StringView?
 pub fn MutHeaders::get_list(Self, String) -> ReadOnlyArray[StringView]
 pub fn MutHeaders::iter(Self) -> Iter[(String, String)]

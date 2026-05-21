@@ -183,6 +183,11 @@ pub fn MutHeaders::MutHeaders() -> MutHeaders {
 }
 
 ///|
+pub fn MutHeaders::from(headers : &ToHeaders) -> MutHeaders {
+  headers.to_headers().to_mut()
+}
+
+///|
 fn MutHeaders::ensure_owned(self : MutHeaders) -> Unit {
   if self.owner_id != self.store.owner_id {
     self.store = self.store.copy(owner_id=self.owner_id)
