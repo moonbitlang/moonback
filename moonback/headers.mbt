@@ -1,46 +1,36 @@
 ///|
+let _headers_next_owner_id : Ref[Int] = { val: 0 }
+
+///|
+const HEADERS_SHARED_OWNER_ID : Int = -1
+
+///|
 /// A mutable HTTP header collection with special handling for `Set-Cookie`.
-pub struct Headers {
-  priv headers : Map[String, String]
-  priv mut set_cookie : Array[StringView]
+priv struct HeaderStore {
+  mut owner_id : Int
+  headers : Map[String, String]
+  mut set_cookie : Array[StringView]
 }
 
 ///|
-struct ImmutableHeaders(Headers)
-
-///|
-/// Converts a value into `Headers`.
-pub trait ToHeaders {
-  to_headers(Self) -> Headers
+fn HeaderStore::copy(self : HeaderStore, owner_id? : Int) -> HeaderStore {
+  {
+    owner_id: owner_id.unwrap_or(self.owner_id),
+    headers: self.headers.copy(),
+    set_cookie: self.set_cookie.copy(),
+  }
 }
 
 ///|
-/// Creates an empty header collection.
-pub fn Headers::Headers() -> Headers {
-  { headers: {}, set_cookie: [] }
+fn HeaderStore::iter(self : HeaderStore) -> Iter[(String, String)] {
+  Iter::concat(
+    self.headers.iter(),
+    self.set_cookie.iter().map(cookie => ("set-cookie", cookie.to_owned())),
+  )
 }
 
 ///|
-/// Returns an empty header collection.
-pub impl Default for Headers with default() {
-  Headers()
-}
-
-///|
-/// Converts any `ToHeaders` value into `Headers`.
-pub fn Headers::from(from : &ToHeaders) -> Headers {
-  from.to_headers()
-}
-
-///|
-fn Headers::from_request(headers : Map[String, String]) -> Headers {
-  { headers, set_cookie: [] }
-}
-
-///|
-/// Returns a header value by name.
-/// Multiple values are joined with `, `.
-pub fn Headers::get(self : Headers, name : String) -> StringView? {
+fn HeaderStore::get(self : HeaderStore, name : String) -> StringView? {
   let name = name.to_lower()
   if name == "set-cookie" {
     return match self.set_cookie {
@@ -56,22 +46,22 @@ pub fn Headers::get(self : Headers, name : String) -> StringView? {
 }
 
 ///|
-/// Returns all values for a header name.
-/// For regular headers, comma-separated values are split into a list.
-pub fn Headers::get_list(self : Headers, name : String) -> Array[StringView] {
+fn HeaderStore::get_list(
+  self : HeaderStore,
+  name : String,
+) -> ReadOnlyArray[StringView] {
   let name = name.to_lower()
   if name == "set-cookie" {
-    return self.set_cookie
+    return ReadOnlyArray::from_array(self.set_cookie)
   }
   match self.headers.get(name) {
     None => []
-    Some(value) => value.split(",").map(s => s.trim()).to_array()
+    Some(value) => ReadOnlyArray::from_iter(value.split(",").map(s => s.trim()))
   }
 }
 
 ///|
-/// Sets a header value, replacing any existing values.
-pub fn Headers::set(self : Headers, name : String, value : String) -> Unit {
+fn HeaderStore::set(self : HeaderStore, name : String, value : String) -> Unit {
   let name = name.to_lower()
   if name == "set-cookie" {
     self.set_cookie = [value]
@@ -81,8 +71,7 @@ pub fn Headers::set(self : Headers, name : String, value : String) -> Unit {
 }
 
 ///|
-/// Adds a header value to the existing values for `name`.
-pub fn Headers::add(self : Headers, name : String, value : String) -> Unit {
+fn HeaderStore::add(self : HeaderStore, name : String, value : String) -> Unit {
   let name = name.to_lower()
   if name == "set-cookie" {
     self.set_cookie.push(value)
@@ -95,14 +84,15 @@ pub fn Headers::add(self : Headers, name : String, value : String) -> Unit {
 }
 
 ///|
-/// Adds a `Set-Cookie` header value.
-pub fn Headers::add_set_cookie(self : Headers, cookie : @http.Cookie) -> Unit {
+fn HeaderStore::add_set_cookie(
+  self : HeaderStore,
+  cookie : @http.Cookie,
+) -> Unit {
   self.set_cookie.push(cookie_to_header_value(cookie))
 }
 
 ///|
-/// Removes all values for the given header name.
-pub fn Headers::remove(self : Headers, name : String) -> Unit {
+fn HeaderStore::remove(self : HeaderStore, name : String) -> Unit {
   let name = name.to_lower()
   if name == "set-cookie" {
     self.set_cookie = []
@@ -112,30 +102,164 @@ pub fn Headers::remove(self : Headers, name : String) -> Unit {
 }
 
 ///|
-/// Iterates over all headers as lowercase name-value pairs.
-pub fn Headers::iter(self : Headers) -> Iter[(String, String)] {
-  Iter::concat(
-    self.headers.iter(),
-    self.set_cookie.iter().map(cookie => ("set-cookie", cookie.to_owned())),
-  )
+#valtype
+struct Headers {
+  store : HeaderStore
+}
+
+///|
+let default_headers : Headers = {
+  store: { owner_id: HEADERS_SHARED_OWNER_ID, headers: {}, set_cookie: [] },
+}
+
+///|
+pub fn Headers::Headers() -> Headers {
+  default_headers
+}
+
+///|
+pub impl Default for Headers with default() -> Headers {
+  default_headers
+}
+
+///|
+/// Converts any `ToHeaders` value into `Headers`.
+pub fn Headers::from(from : &ToHeaders) -> Headers {
+  from.to_headers()
+}
+
+///|
+fn Headers::from_request(headers : Map[String, String]) -> Headers {
+  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie: [] }
+  { store, }
+}
+
+///|
+pub fn Headers::to_mut(self : Headers) -> MutHeaders {
+  let owner_id = _headers_next_owner_id.val
+  _headers_next_owner_id.val += 1
+  { owner_id, store: self.store }
 }
 
 ///|
 /// Returns a header value by name.
-pub fn ImmutableHeaders::get(
-  self : ImmutableHeaders,
-  name : String,
-) -> StringView? {
-  self.0.get(name)
+/// Multiple values are joined with `, `.
+pub fn Headers::get(self : Headers, name : String) -> StringView? {
+  self.store.get(name)
 }
 
 ///|
 /// Returns all values for a header name.
-pub fn ImmutableHeaders::get_list(
-  self : ImmutableHeaders,
+/// For regular headers, comma-separated values are split into a list.
+pub fn Headers::get_list(
+  self : Headers,
   name : String,
-) -> Array[StringView] {
-  self.0.get_list(name)
+) -> ReadOnlyArray[StringView] {
+  self.store.get_list(name)
+}
+
+///|
+/// Iterates over all headers as lowercase name-value pairs.
+pub fn Headers::iter(self : Headers) -> Iter[(String, String)] {
+  self.store.iter()
+}
+
+///|
+pub trait ToHeaders {
+  to_headers(Self) -> Headers
+}
+
+///|
+struct MutHeaders {
+  owner_id : Int
+  mut store : HeaderStore
+}
+
+///|
+pub fn MutHeaders::MutHeaders() -> MutHeaders {
+  let owner_id = _headers_next_owner_id.val
+  _headers_next_owner_id.val += 1
+  { owner_id, store: { owner_id, headers: {}, set_cookie: [] } }
+}
+
+///|
+fn MutHeaders::ensure_owned(self : MutHeaders) -> Unit {
+  if self.owner_id != self.store.owner_id {
+    self.store = self.store.copy(owner_id=self.owner_id)
+  }
+}
+
+///|
+/// Returns a header value by name.
+/// Multiple values are joined with `, `.
+pub fn MutHeaders::get(self : MutHeaders, name : String) -> StringView? {
+  self.store.get(name)
+}
+
+///|
+/// Returns all values for a header name.
+/// For regular headers, comma-separated values are split into a list.
+pub fn MutHeaders::get_list(
+  self : MutHeaders,
+  name : String,
+) -> ReadOnlyArray[StringView] {
+  self.store.get_list(name)
+}
+
+///|
+/// Iterates over all headers as lowercase name-value pairs.
+pub fn MutHeaders::iter(self : MutHeaders) -> Iter[(String, String)] {
+  self.store.iter()
+}
+
+///|
+/// Sets a header value, replacing any existing values.
+pub fn MutHeaders::set(
+  self : MutHeaders,
+  name : String,
+  value : String,
+) -> Unit {
+  self.ensure_owned()
+  self.store.set(name, value)
+}
+
+///|
+/// Adds a header value to the existing values for `name`.
+pub fn MutHeaders::add(
+  self : MutHeaders,
+  name : String,
+  value : String,
+) -> Unit {
+  self.ensure_owned()
+  self.store.add(name, value)
+}
+
+///|
+/// Adds a `Set-Cookie` header value.
+pub fn MutHeaders::add_set_cookie(
+  self : MutHeaders,
+  cookie : @http.Cookie,
+) -> Unit {
+  self.ensure_owned()
+  self.store.add_set_cookie(cookie)
+}
+
+///|
+/// Removes all values for the given header name.
+pub fn MutHeaders::remove(self : MutHeaders, name : String) -> Unit {
+  self.ensure_owned()
+  self.store.remove(name)
+}
+
+///|
+pub fn MutHeaders::to_immut(self : MutHeaders) -> Headers {
+  self.store.owner_id = HEADERS_SHARED_OWNER_ID
+  { store: self.store }
+}
+
+///|
+pub impl ToHeaders for MutHeaders with to_headers(self) -> Headers {
+  self.to_immut()
 }
 
 ///|
@@ -155,7 +279,8 @@ pub impl ToHeaders for Map[String, String] with to_headers(self) -> Headers {
     }
     headers[k] = v
   }
-  { headers, set_cookie }
+  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie }
+  { store, }
 }
 
 ///|
@@ -174,18 +299,6 @@ pub impl ToHeaders for Array[(String, String)] with to_headers(self) -> Headers 
       Some(old) => headers[k] = old + ", " + v
     }
   }
-  { headers, set_cookie }
-}
-
-///|
-pub impl ToHeaders for ImmutableHeaders with to_headers(self) -> Headers {
-  { headers: self.0.headers.copy(), set_cookie: self.0.set_cookie.copy() }
-}
-
-///|
-/// Iterates over all headers as lowercase name-value pairs.
-pub fn ImmutableHeaders::iter(
-  self : ImmutableHeaders,
-) -> Iter[(String, String)] {
-  self.0.iter()
+  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie }
+  { store, }
 }

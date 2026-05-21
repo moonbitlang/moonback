@@ -44,22 +44,13 @@ pub struct Headers {
   // private fields
 }
 pub fn Headers::Headers() -> Self
-pub fn Headers::add(Self, String, String) -> Unit
-pub fn Headers::add_set_cookie(Self, @http.Cookie) -> Unit
 pub fn Headers::from(&ToHeaders) -> Self
 pub fn Headers::get(Self, String) -> StringView?
-pub fn Headers::get_list(Self, String) -> Array[StringView]
+pub fn Headers::get_list(Self, String) -> ReadOnlyArray[StringView]
 pub fn Headers::iter(Self) -> Iter[(String, String)]
-pub fn Headers::remove(Self, String) -> Unit
-pub fn Headers::set(Self, String, String) -> Unit
+pub fn Headers::to_mut(Self) -> MutHeaders
 pub impl ToHeaders for Headers
 pub impl Default for Headers
-
-type ImmutableHeaders
-pub fn ImmutableHeaders::get(Self, String) -> StringView?
-pub fn ImmutableHeaders::get_list(Self, String) -> Array[StringView]
-pub fn ImmutableHeaders::iter(Self) -> Iter[(String, String)]
-pub impl ToHeaders for ImmutableHeaders
 
 pub(all) struct Middleware((async (Request, Responder) -> Unit) -> async (Request, Responder) -> Unit)
 pub fn Middleware::chain(ArrayView[Self]) -> Self
@@ -78,19 +69,33 @@ pub fn ModuleContext::on_close(Self, () -> Unit) -> Unit
 pub fn ModuleContext::post(Self, String, async (Request, Responder) -> Unit) -> Unit raise RouterError
 pub async fn ModuleContext::use_(Self, &Extension) -> Unit
 
+pub struct MutHeaders {
+  // private fields
+}
+pub fn MutHeaders::MutHeaders() -> Self
+pub fn MutHeaders::add(Self, String, String) -> Unit
+pub fn MutHeaders::add_set_cookie(Self, @http.Cookie) -> Unit
+pub fn MutHeaders::get(Self, String) -> StringView?
+pub fn MutHeaders::get_list(Self, String) -> ReadOnlyArray[StringView]
+pub fn MutHeaders::iter(Self) -> Iter[(String, String)]
+pub fn MutHeaders::remove(Self, String) -> Unit
+pub fn MutHeaders::set(Self, String, String) -> Unit
+pub fn MutHeaders::to_immut(Self) -> Headers
+pub impl ToHeaders for MutHeaders
+
 pub(all) struct Request {
   ctx : Context
   meth : @http.RequestMethod
   path : StringView
   search : StringView?
-  headers : ImmutableHeaders
+  headers : Headers
   params : Map[StringView, StringView]
   body : RequestBody
 }
 pub fn Request::app(Self) -> App
 pub fn Request::cookie(Self) -> Map[String, String]
 pub fn Request::ip(Self) -> StringView?
-pub fn Request::ips(Self) -> Array[StringView]
+pub fn Request::ips(Self) -> ReadOnlyArray[StringView]
 
 type RequestBody
 pub async fn RequestBody::binary(Self) -> Bytes

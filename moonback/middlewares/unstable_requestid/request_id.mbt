@@ -35,7 +35,7 @@ pub fn new(
           None => res
           Some(header) =>
             (status, headers) => {
-              headers.set(header, request_id)
+              let headers = headers.to_mut()..set(header, request_id).to_immut()
               res(status, headers)
             }
         },

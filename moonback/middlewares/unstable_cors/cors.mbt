@@ -1,6 +1,6 @@
 ///|
 fn apply_preflight_headers(
-  headers : @moonback.Headers,
+  headers : @moonback.MutHeaders,
   origin : String,
   methods : String,
   allow_headers : String,
@@ -18,7 +18,7 @@ fn apply_preflight_headers(
 
 ///|
 fn apply_response_headers(
-  headers : @moonback.Headers,
+  headers : @moonback.MutHeaders,
   origin : String,
   methods : String,
   allow_headers : String,
@@ -51,10 +51,11 @@ fn cors_responder(
   credentials : Bool,
 ) -> @moonback.Responder {
   (status, headers) => {
+    let mut_headers = headers.to_mut()
     apply_response_headers(
-      headers, origin, methods, allow_headers, expose_headers, credentials,
+      mut_headers, origin, methods, allow_headers, expose_headers, credentials,
     )
-    inner.respond(status~, headers~)
+    inner.respond(status~, headers=mut_headers.to_immut())
   }
 }
 
@@ -70,7 +71,7 @@ pub fn new(
   @moonback.Middleware(next => {
     (req, res) => {
       if is_preflight(req) {
-        let headers = @moonback.Headers()
+        let headers = @moonback.MutHeaders()
         apply_preflight_headers(
           headers, origin, methods, allow_headers, credentials, max_age,
         )

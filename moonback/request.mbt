@@ -21,7 +21,7 @@ pub(all) struct Request {
   /// The raw query string, if any. This is the part after `?` in the URL.
   search : StringView?
   /// The request headers. This is an immutable view of the headers, and should be used for reading header values.
-  headers : ImmutableHeaders
+  headers : Headers
   /// The parsed path parameters for this request, if any. This is populated by the router when a route is matched.
   params : Map[StringView, StringView]
   /// The request body, which can be read as a stream or buffered in memory.
@@ -37,7 +37,7 @@ pub fn Request::app(self : Request) -> App {
 ///|
 /// Returns the client IP chain for this request.
 /// When `trust_proxy` is enabled, this prefers `X-Forwarded-For`.
-pub fn Request::ips(self : Request) -> Array[StringView] {
+pub fn Request::ips(self : Request) -> ReadOnlyArray[StringView] {
   if self.ctx.app.config().trust_proxy &&
     self.headers.get_list("X-Forwarded-For") is x &&
     !x.is_empty() {

@@ -23,8 +23,8 @@ fn Responder::from_conn(conn : @http.ServerConnection) -> Responder {
     conn.send_response(
       status,
       status_to_reason_phrase(status),
-      extra_headers=h.headers,
-      cookies=h.set_cookie.map(str => parse_set_cookie(str)),
+      extra_headers=h.store.headers,
+      cookies=h.store.set_cookie.map(str => parse_set_cookie(str)),
     )
     conn
   })
