@@ -5,7 +5,7 @@ pub(open) trait WriteFlusher: @io.Writer + Flusher {}
 ///|
 /// Flushes buffered output to the underlying transport.
 pub(open) trait Flusher {
-  async flush(self : Self) -> Unit
+  async fn flush(self : Self) -> Unit
 }
 
 ///|

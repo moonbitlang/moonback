@@ -1,9 +1,0 @@
-{
-  "name": "hackwaly/moonback",
-  "version": "0.2.1",
-  "deps": {
-    "moonbitlang/async": "0.18.1"
-  },
-  "license": "Apache-2.0",
-  "preferred-target": "native"
-}

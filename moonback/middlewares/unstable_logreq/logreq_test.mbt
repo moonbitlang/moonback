@@ -4,7 +4,7 @@ struct CaptureWriter {
 }
 
 ///|
-impl @io.Writer for CaptureWriter with write_once(self, buf, offset~, len~) {
+impl @io.Writer for CaptureWriter with fn write_once(self, buf, offset~, len~) {
   self.log.write_string(@utf8.decode(buf[offset:offset + len]))
   len
 }

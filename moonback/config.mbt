@@ -20,6 +20,6 @@ pub fn Config::Config(
 
 ///|
 /// Returns the default application configuration.
-pub impl Default for Config with default() -> Config {
+pub impl Default for Config with fn default() -> Config {
   Config()
 }

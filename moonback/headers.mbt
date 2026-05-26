@@ -118,7 +118,7 @@ pub fn Headers::Headers() -> Headers {
 }
 
 ///|
-pub impl Default for Headers with default() -> Headers {
+pub impl Default for Headers with fn default() -> Headers {
   default_headers
 }
 
@@ -166,7 +166,7 @@ pub fn Headers::iter(self : Headers) -> Iter[(String, String)] {
 
 ///|
 pub trait ToHeaders {
-  to_headers(Self) -> Headers
+  fn to_headers(Self) -> Headers
 }
 
 ///|
@@ -263,17 +263,17 @@ pub fn MutHeaders::to_immut(self : MutHeaders) -> Headers {
 }
 
 ///|
-pub impl ToHeaders for MutHeaders with to_headers(self) -> Headers {
+pub impl ToHeaders for MutHeaders with fn to_headers(self) -> Headers {
   self.to_immut()
 }
 
 ///|
-pub impl ToHeaders for Headers with to_headers(self) -> Headers {
+pub impl ToHeaders for Headers with fn to_headers(self) -> Headers {
   self
 }
 
 ///|
-pub impl ToHeaders for Map[String, String] with to_headers(self) -> Headers {
+pub impl ToHeaders for Map[String, String] with fn to_headers(self) -> Headers {
   let headers = {}
   let set_cookie = []
   for k, v in self {
@@ -289,7 +289,7 @@ pub impl ToHeaders for Map[String, String] with to_headers(self) -> Headers {
 }
 
 ///|
-pub impl ToHeaders for Array[(String, String)] with to_headers(self) -> Headers {
+pub impl ToHeaders for Array[(String, String)] with fn to_headers(self) -> Headers {
   let headers = {}
   let set_cookie = []
   for pair in self {

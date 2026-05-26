@@ -124,21 +124,21 @@ pub type Handler = async (Request, Responder) -> Unit
 
 // Traits
 pub(open) trait Extension {
-  async initialize(Self, ModuleContext) -> Unit
+  async fn initialize(Self, ModuleContext) -> Unit
 }
 
 pub(open) trait Flusher {
-  async flush(Self) -> Unit
+  async fn flush(Self) -> Unit
 }
 
 pub(open) trait Listener {
-  async accept(Self) -> (@http.ServerConnection, @socket.Addr)
-  close(Self) -> Unit
+  async fn accept(Self) -> (@http.ServerConnection, @socket.Addr)
+  fn close(Self) -> Unit
 }
 pub impl Listener for @http.Server
 
 pub trait ToHeaders {
-  to_headers(Self) -> Headers
+  fn to_headers(Self) -> Headers
 }
 pub impl ToHeaders for Array[(String, String)]
 pub impl ToHeaders for Map[String, String]

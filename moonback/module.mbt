@@ -57,7 +57,7 @@ pub(all) struct Module(async (ModuleContext) -> Unit)
 /// Custom extension values can also implement `Extension` when you want to
 /// package reusable setup logic without exposing it as a raw module.
 pub(open) trait Extension {
-  async initialize(self : Self, ctx : ModuleContext) -> Unit
+  async fn initialize(self : Self, ctx : ModuleContext) -> Unit
 }
 
 ///|
@@ -148,6 +148,6 @@ pub fn ModuleContext::add_middleware(
 }
 
 ///|
-pub impl Extension for Module with initialize(self, ctx) {
+pub impl Extension for Module with fn initialize(self, ctx) {
   self(ctx)
 }

@@ -12,16 +12,16 @@
 ///
 /// * `close` - Closes the listener and stops accepting new connections.
 pub(open) trait Listener {
-  async accept(self : Self) -> (@http.ServerConnection, @socket.Addr)
-  close(self : Self) -> Unit
+  async fn accept(self : Self) -> (@http.ServerConnection, @socket.Addr)
+  fn close(self : Self) -> Unit
 }
 
 ///|
-pub impl Listener for @http.Server with accept(self) {
+pub impl Listener for @http.Server with fn accept(self) {
   self.accept()
 }
 
 ///|
-pub impl Listener for @http.Server with close(self) {
+pub impl Listener for @http.Server with fn close(self) {
   self.close()
 }

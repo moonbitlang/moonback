@@ -12,7 +12,7 @@ impl WriteFlusher for @http.ServerConnection
 
 ///|
 #warnings("-unused_value")
-impl Flusher for @http.ServerConnection with flush(self) {
+impl Flusher for @http.ServerConnection with fn flush(self) {
   self.flush()
 }
 
