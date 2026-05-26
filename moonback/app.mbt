@@ -188,7 +188,7 @@ pub async fn App::serve(
 /// Unload root module - run registered on_close hooks.
 /// The app should not be used after this.
 ///
-/// ## Example:
+/// Example:
 /// ```moonbit nocheck
 /// let app = @moonback.App((ctx) => { ... })
 /// defer app.close()

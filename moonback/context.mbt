@@ -58,3 +58,22 @@ pub fn[T] Context::set_userdata(
 ) -> Unit {
   self.userdata = self.userdata.add(key.val, (key.box)(val))
 }
+
+///|
+/// Wraps a handler with middlewares. The middlewares will be applied in the order they are given.
+/// Example:
+/// ```moonbit nocheck
+/// ctx.get(
+///   "/",
+///   ctx.with_middlewares([middleware1, middleware2]) <| ((req, res) => {
+///     ...
+///   })
+/// )
+/// ```
+pub fn Context::with_middlewares(
+  _self : Context,
+  middlewares : ArrayView[Middleware],
+  handler : Handler,
+) -> Handler {
+  Middleware::chain(middlewares)(handler)
+}

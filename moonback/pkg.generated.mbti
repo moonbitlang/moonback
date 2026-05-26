@@ -39,6 +39,7 @@ pub impl Default for Config
 type Context
 pub fn[T] Context::get_userdata(Self, UserdataKey[T]) -> T?
 pub fn[T] Context::set_userdata(Self, UserdataKey[T], T) -> Unit
+pub fn Context::with_middlewares(Self, ArrayView[Middleware], async (Request, Responder) -> Unit) -> async (Request, Responder) -> Unit
 
 pub struct Headers {
   // private fields
