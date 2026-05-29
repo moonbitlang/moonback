@@ -4,6 +4,7 @@ priv suberror StopResponding
 ///|
 priv suberror PrivUserdataKey {
   Cookies(Map[String, String])
+  QueryParams(QueryParams)
 }
 
 ///|

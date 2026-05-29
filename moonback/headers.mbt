@@ -46,7 +46,7 @@ fn HeaderStore::get(self : HeaderStore, name : String) -> StringView? {
 }
 
 ///|
-fn HeaderStore::get_list(
+fn HeaderStore::get_all(
   self : HeaderStore,
   name : String,
 ) -> ReadOnlyArray[StringView] {
@@ -151,11 +151,21 @@ pub fn Headers::get(self : Headers, name : String) -> StringView? {
 ///|
 /// Returns all values for a header name.
 /// For regular headers, comma-separated values are split into a list.
+pub fn Headers::get_all(
+  self : Headers,
+  name : String,
+) -> ReadOnlyArray[StringView] {
+  self.store.get_all(name)
+}
+
+///|
+/// Returns all values for a header name.
+/// For regular headers, comma-separated values are split into a list.
 pub fn Headers::get_list(
   self : Headers,
   name : String,
 ) -> ReadOnlyArray[StringView] {
-  self.store.get_list(name)
+  self.store.get_all(name)
 }
 
 ///|
@@ -204,11 +214,11 @@ pub fn MutHeaders::get(self : MutHeaders, name : String) -> StringView? {
 ///|
 /// Returns all values for a header name.
 /// For regular headers, comma-separated values are split into a list.
-pub fn MutHeaders::get_list(
+pub fn MutHeaders::get_all(
   self : MutHeaders,
   name : String,
 ) -> ReadOnlyArray[StringView] {
-  self.store.get_list(name)
+  self.store.get_all(name)
 }
 
 ///|

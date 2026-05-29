@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/test",
   "moonbitlang/core/string",
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/immut/sorted_map" @immut/sorted_map,
   "moonbitlang/async",
   "moonbitlang/async/http",
