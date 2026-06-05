@@ -35,5 +35,5 @@ pub async fn listen(
   port? : UInt16 = 0,
 ) -> @http.Server {
   let addr = @socket.Addr::parse(join_host_port(host, port))
-  @http.Server::new(addr, dual_stack~, reuse_addr~)
+  @http.Server(addr, dual_stack~, reuse_addr~)
 }

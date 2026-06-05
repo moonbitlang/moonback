@@ -138,11 +138,11 @@ pub async fn App::serve(
   listener : &Listener,
   take_ownership? : Bool = true,
 ) -> Unit {
-  let no_protect = @async.CondVar::new()
+  let no_protect = @async.CondVar::Cond()
   @async.with_task_group(group => {
     try {
       if self.inst.config.max_connections is Some(limit) {
-        let limit = @async.Semaphore::new(limit)
+        let limit = @async.Semaphore(limit)
         for ;; {
           let (conn, peer_addr) = listener.accept()
           limit.acquire()
