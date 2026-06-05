@@ -37,8 +37,8 @@ pub fn Config::Config(max_connections? : Int, stop_timeout? : Double, trust_prox
 pub impl Default for Config
 
 type Context
-pub fn[T] Context::get_userdata(Self, UserdataKey[T]) -> T?
-pub fn[T] Context::set_userdata(Self, UserdataKey[T], T) -> Unit
+pub fn[T] Context::get_userdata(Self, TypedKey[T]) -> T?
+pub fn[T] Context::set_userdata(Self, TypedKey[T], T) -> Unit
 pub fn Context::with_middlewares(Self, ArrayView[Middleware], async (Request, Responder) -> Unit) -> async (Request, Responder) -> Unit
 
 pub struct Headers {
@@ -123,12 +123,11 @@ pub async fn Responder::send_text(Self, String, status? : Int, headers? : &ToHea
 pub async fn Responder::send_void(Self, status? : Int, headers? : &ToHeaders) -> Unit
 pub async fn Responder::upgrade(Self, Request) -> @websocket.Conn
 
-pub struct UserdataKey[T] {
-  val : Int
-  box : (T) -> Error
-  unbox : (Error) -> T?
+pub struct TypedKey[T] {
+  // private fields
 }
-pub fn[T] UserdataKey::UserdataKey(box~ : (T) -> Error, unbox~ : (Error) -> T?) -> Self[T]
+pub fn[T] TypedKey::TypedKey(name? : String, box~ : (T) -> Error, unbox~ : (Error) -> T?) -> Self[T]
+pub fn[T] TypedKey::name(Self[T]) -> String
 
 // Type aliases
 pub type Handler = async (Request, Responder) -> Unit

@@ -1,5 +1,5 @@
 ///|
-let _request_cookie_key : UserdataKey[Map[String, String]] = UserdataKey(
+let _request_cookie_key : TypedKey[Map[String, String]] = TypedKey(
   box=cookies => Cookies(cookies),
   unbox=err => {
     match err {
@@ -10,7 +10,7 @@ let _request_cookie_key : UserdataKey[Map[String, String]] = UserdataKey(
 )
 
 ///|
-let _request_query_key : UserdataKey[QueryParams] = UserdataKey(
+let _request_query_key : TypedKey[QueryParams] = TypedKey(
   box=query => QueryParams(query),
   unbox=err => {
     match err {

@@ -4,7 +4,7 @@ priv suberror Key {
 }
 
 ///|
-let key : @moonback.UserdataKey[String] = @moonback.UserdataKey(
+let key : @moonback.TypedKey[String] = @moonback.TypedKey(
   box=id => RequestId(id),
   unbox=err => {
     match err {

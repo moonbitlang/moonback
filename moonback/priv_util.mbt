@@ -2,7 +2,7 @@
 priv suberror StopResponding
 
 ///|
-priv suberror PrivUserdataKey {
+priv suberror PrivTypedKey {
   Cookies(Map[String, String])
   QueryParams(QueryParams)
 }
