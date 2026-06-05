@@ -2,7 +2,7 @@
 struct Context {
   app : App
   mut conn_info : ConnectionInfo
-  mut userdata : @immut/sorted_map.SortedMap[Int, Error]
+  mut userdata : @immut/sorted_map.SortedMap[Int, TypedBox]
 }
 
 ///|

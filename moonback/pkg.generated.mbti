@@ -131,10 +131,13 @@ pub async fn Responder::send_text(Self, String, status? : Int, headers? : &ToHea
 pub async fn Responder::send_void(Self, status? : Int, headers? : &ToHeaders) -> Unit
 pub async fn Responder::upgrade(Self, Request) -> @websocket.Conn
 
+pub extenum TypedBox {
+}
+
 pub struct TypedKey[T] {
   // private fields
 }
-pub fn[T] TypedKey::TypedKey(name? : String, box~ : (T) -> Error, unbox~ : (Error) -> T?) -> Self[T]
+pub fn[T] TypedKey::TypedKey(name? : String, box~ : (T) -> TypedBox, unbox~ : (TypedBox) -> T?) -> Self[T]
 pub fn[T] TypedKey::name(Self[T]) -> String
 
 // Type aliases

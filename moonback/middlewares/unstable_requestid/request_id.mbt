@@ -1,5 +1,5 @@
 ///|
-priv suberror Key {
+extenum @moonback.TypedBox += {
   RequestId(String)
 }
 

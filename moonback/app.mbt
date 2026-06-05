@@ -4,7 +4,7 @@ priv struct AppInst {
   router : Router
   mut middlewares : Array[Middleware]
   mut close_hook : Array[() -> Unit]
-  mut dependencies : @immut/sorted_map.SortedMap[Int, Error]
+  mut dependencies : @immut/sorted_map.SortedMap[Int, TypedBox]
 }
 
 ///|

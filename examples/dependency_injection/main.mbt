@@ -4,7 +4,7 @@ struct Greeter {
 }
 
 ///|
-priv suberror Dependencies {
+extenum @moonback.TypedBox += {
   GreeterDependency(Greeter)
 }
 

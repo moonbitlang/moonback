@@ -2,7 +2,7 @@
 priv suberror StopResponding
 
 ///|
-priv suberror PrivTypedKey {
+extenum TypedBox += {
   Cookies(Map[String, String])
   QueryParams(QueryParams)
 }

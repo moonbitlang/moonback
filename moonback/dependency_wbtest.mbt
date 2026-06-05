@@ -1,5 +1,5 @@
 ///|
-priv suberror DependencyTestValue {
+extenum TypedBox += {
   StringDependency(String)
   IntDependency(Int)
 }
