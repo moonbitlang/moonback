@@ -4,6 +4,7 @@ priv struct AppInst {
   router : Router
   mut middlewares : Array[Middleware]
   mut close_hook : Array[() -> Unit]
+  mut dependencies : @immut/sorted_map.SortedMap[Int, Error]
 }
 
 ///|
@@ -19,6 +20,7 @@ async fn AppInst::init(root : Module, config : Config) -> AppInst {
     router: Router::new(),
     middlewares: [],
     close_hook: [],
+    dependencies: @immut/sorted_map.SortedMap::new(),
   }
   (root.0)({ inst, })
   inst
@@ -33,6 +35,7 @@ fn AppInst::on_close(self : AppInst) -> Unit {
     func()
   }
   guard self.close_hook.is_empty() else { panic() }
+  self.dependencies = @immut/sorted_map.SortedMap::new()
 }
 
 ///|

@@ -1,5 +1,6 @@
 members = [
   "./moonback",
+  "./examples/dependency_injection",
   "./examples/graceful_shutdown",
   "./examples/websocket_echo",
   "./examples/serve_static_with_api",

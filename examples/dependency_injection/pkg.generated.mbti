@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "dependency_injection"
+
+// Values
+
+// Errors
+
+// Types and methods
+type Greeter
+
+// Type aliases
+
+// Traits
+

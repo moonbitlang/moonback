@@ -14,6 +14,11 @@ pub async fn default_handler(Request, Responder) -> Unit
 pub async fn listen(reuse_addr? : Bool, dual_stack? : Bool, host? : String, port? : UInt16) -> @http.Server
 
 // Errors
+pub suberror DependencyError {
+  MissingDependency(name~ : String)
+  DuplicateDependency(name~ : String)
+}
+
 pub suberror RouterError {
   RouteConflict(path~ : StringView)
 }
@@ -69,6 +74,9 @@ pub fn ModuleContext::get(Self, String, async (Request, Responder) -> Unit) -> U
 pub fn ModuleContext::mount(Self, String, App, take_ownership? : Bool) -> Unit raise RouterError
 pub fn ModuleContext::on_close(Self, () -> Unit) -> Unit
 pub fn ModuleContext::post(Self, String, async (Request, Responder) -> Unit) -> Unit raise RouterError
+pub fn[T] ModuleContext::provide(Self, TypedKey[T], T) -> Unit raise DependencyError
+pub fn[T] ModuleContext::require(Self, TypedKey[T]) -> T raise DependencyError
+pub fn[T] ModuleContext::resolve(Self, TypedKey[T]) -> T?
 pub async fn ModuleContext::use_(Self, &Extension) -> Unit
 
 pub struct MutHeaders {
