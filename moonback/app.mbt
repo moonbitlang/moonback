@@ -96,16 +96,16 @@ async fn App::serve_on_connection(
 ) -> Unit {
   let mut upgraded = false
   for ; !upgraded; {
+    let raw_req = conn.read_request()
     @async.protect_from_cancel(() => {
       @async.with_task_group(group => {
-        let req = conn.read_request()
-        let (path, search) = split_path_search(req.path)
+        let (path, search) = split_path_search(raw_req.path)
         let req : Request = {
-          ctx: Context::new(self, Normal(req, conn, peer_addr)),
-          meth: req.meth,
+          ctx: Context::new(self, Normal(raw_req, conn, peer_addr)),
+          meth: raw_req.meth,
           path,
           search,
-          headers: Headers::from_request(req.headers),
+          headers: Headers::from_request(raw_req.headers),
           params: {},
           body: RequestBody::from_ready_stream(conn, group~),
         }
