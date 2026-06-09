@@ -48,10 +48,16 @@ async fn AppInst::handle_request(
     None => default_handler
     Some({ handler, params }) => (req, res) => handler({ ..req, params, }, res)
   }
+  let committed : Ref[Bool] = { val: false }
+  let res = res.track_committed(committed)
   Middleware::chain(self.middlewares)(handler)(req, res) catch {
-    StopResponding => ()
-    _err => res.send_void(status=500)
-    // TODO: log the error
+    err if @async.is_cancellation_error(err) => ()
+    _err => {
+      // TODO: log the error
+      guard !committed.val else { return }
+      guard !(req.ctx.conn_info is Upgraded(_, _)) else { return }
+      res.send_void(status=500)
+    }
   }
 }
 

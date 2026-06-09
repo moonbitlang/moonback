@@ -5,6 +5,79 @@ suberror IdleKeepAliveHandledTimeout
 suberror IdleKeepAliveCancelTimeout
 
 ///|
+suberror HandlerFailure
+
+///|
+struct NoopWriteFlusher {}
+
+///|
+impl @io.Writer for NoopWriteFlusher with fn write_once(
+  _self,
+  _buf,
+  offset~,
+  len~,
+) {
+  let _ = offset
+  len
+}
+
+///|
+impl Flusher for NoopWriteFlusher with fn flush(_self) -> Unit {
+  ()
+}
+
+///|
+impl WriteFlusher for NoopWriteFlusher
+
+///|
+async fn run_with_fake_responder(app : App) -> Array[Int] {
+  let statuses = []
+  let writer = NoopWriteFlusher::{  }
+  @async.with_task_group(group => {
+    let req : Request = {
+      ctx: Context::new(app, Mock),
+      meth: Get,
+      path: "/",
+      search: None,
+      headers: Headers::default(),
+      params: {},
+      body: { group, state: Unbuffered },
+    }
+    app.handle_request(
+      req,
+      Responder((status, _headers) => {
+        statuses.push(status)
+        writer
+      }),
+    )
+  })
+  statuses
+}
+
+///|
+async test "handle request sends 500 when handler fails before response" {
+  let app = App(
+    Module(ctx => ctx.get("/", (_req, _res) => raise HandlerFailure)),
+  )
+  defer app.close()
+  @test.assert_eq(run_with_fake_responder(app), [500])
+}
+
+///|
+async test "handle request does not send 500 after response started" {
+  let app = App(
+    Module(ctx => {
+      ctx.get("/", (_req, res) => {
+        res.send_void(status=204)
+        raise HandlerFailure
+      })
+    }),
+  )
+  defer app.close()
+  @test.assert_eq(run_with_fake_responder(app), [204])
+}
+
+///|
 async test "serve cancels idle keep-alive connections" {
   let mut handled = false
   let app = App(

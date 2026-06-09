@@ -31,6 +31,19 @@ fn Responder::from_conn(conn : @http.ServerConnection) -> Responder {
 }
 
 ///|
+fn Responder::track_committed(
+  self : Responder,
+  committed : Ref[Bool],
+) -> Responder {
+  Responder((status, headers) => {
+    guard !committed.val else { fail("Response already committed") }
+    let writer = (self.0)(status, headers)
+    committed.val = true
+    writer
+  })
+}
+
+///|
 /// Sends the status line and headers, then returns the body writer.
 pub async fn Responder::respond(
   self : Responder,

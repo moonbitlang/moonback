@@ -2,6 +2,7 @@
 struct Context {
   app : App
   mut conn_info : ConnectionInfo
+  mut committed : Bool
   mut userdata : @immut/sorted_map.SortedMap[Int, TypedBox]
 }
 
@@ -15,7 +16,12 @@ priv enum ConnectionInfo {
 
 ///|
 fn Context::new(app : App, conn_info : ConnectionInfo) -> Context {
-  { app, conn_info, userdata: @immut/sorted_map.SortedMap::new() }
+  {
+    app,
+    committed: false,
+    conn_info,
+    userdata: @immut/sorted_map.SortedMap::new(),
+  }
 }
 
 ///|

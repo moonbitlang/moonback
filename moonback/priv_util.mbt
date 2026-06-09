@@ -1,7 +1,4 @@
 ///|
-priv suberror StopResponding
-
-///|
 extenum TypedBox += {
   Cookies(Map[String, String])
   QueryParams(QueryParams)
