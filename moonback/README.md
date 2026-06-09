@@ -25,8 +25,8 @@ Add MoonBack to your `moon.mod`:
 
 ```moonbit
 import {
-  "moonbitlang/async@0.18.1",
-  "hackwaly/moonback@0.5.0",
+  "moonbitlang/async@0.19.2",
+  "hackwaly/moonback@0.5.1",
 }
 ```
 
@@ -71,24 +71,20 @@ A `Module` is a reusable unit of application initialization. Modules register
 routes, middleware, mounted apps, close hooks, and dependencies.
 
 ```moonbit
-fn posts_module() -> @moonback.Module {
-  @moonback.Module(ctx => {
-    ctx.get("/posts", list_posts)
-    ctx.get("/posts/:id", show_post)
-  })
-}
+let posts_module : @moonback.Module = @moonback.Module(ctx => {
+  ctx.get("/posts", list_posts)
+  ctx.get("/posts/:id", show_post)
+})
 
-fn admin_module() -> @moonback.Module {
-  @moonback.Module(ctx => {
-    ctx.add_middleware(require_admin)
-    ctx.get("/admin/users", list_users)
-  })
-}
+let admin_module : @moonback.Module = @moonback.Module(ctx => {
+  ctx.add_middleware(require_admin)
+  ctx.get("/admin/users", list_users)
+})
 
 async fn main {
   let app = @moonback.App(ctx => {
-    ctx.use_(posts_module())
-    ctx.use_(admin_module())
+    ctx.use_(posts_module)
+    ctx.use_(admin_module)
   })
   defer app.close()
 
@@ -294,7 +290,7 @@ struct Greeter {
   prefix : String
 }
 
-priv suberror Dependencies {
+extenum @moonback.TypedBox += {
   GreeterDependency(Greeter)
 }
 
@@ -313,19 +309,17 @@ let greeter_key : @moonback.TypedKey[Greeter] = @moonback.TypedKey(
 Provide and require it from modules:
 
 ```moonbit
-fn greeter_module() -> @moonback.Module {
-  @moonback.Module(ctx => {
-    let greeter = ctx.require(greeter_key)
+let greeter_module : @moonback.Module = @moonback.Module(ctx => {
+  let greeter = ctx.require(greeter_key)
 
-    ctx.get("/", (_req, res) => {
-      res.send_text("\{greeter.prefix}, MoonBack!")
-    })
+  ctx.get("/", (_req, res) => {
+    res.send_text("\{greeter.prefix}, MoonBack!")
   })
-}
+})
 
 let app = @moonback.App(ctx => {
   ctx.provide(greeter_key, { prefix: "Hello" })
-  ctx.use_(greeter_module())
+  ctx.use_(greeter_module)
 })
 ```
 
@@ -382,7 +376,7 @@ uses the same `TypedKey` pattern as dependency injection and request userdata,
 but values are stored on `Config` and are available through `app.config()`.
 
 ```moonbit
-priv suberror AppConfig {
+extenum @moonback.TypedBox += {
   UploadRoot(String)
 }
 
