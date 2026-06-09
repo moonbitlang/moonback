@@ -91,6 +91,7 @@ pub impl Extension for Module
 type ModuleContext
 pub fn ModuleContext::add_middleware(Self, Middleware) -> Unit
 pub fn ModuleContext::add_route(Self, @http.RequestMethod, String, async (Request, Responder) -> Unit) -> Unit raise RouterError
+pub fn ModuleContext::config(Self) -> Config
 pub fn ModuleContext::get(Self, String, async (Request, Responder) -> Unit) -> Unit raise RouterError
 pub fn ModuleContext::mount(Self, String, App, take_ownership? : Bool) -> Unit raise RouterError
 pub fn ModuleContext::on_close(Self, () -> Unit) -> Unit

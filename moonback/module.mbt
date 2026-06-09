@@ -61,6 +61,12 @@ pub(open) trait Extension {
 }
 
 ///|
+/// Returns the configuration for the app being initialized.
+pub fn ModuleContext::config(self : ModuleContext) -> Config {
+  self.inst.config
+}
+
+///|
 /// Registers a callback that runs when the owning app is closed.
 pub fn ModuleContext::on_close(self : ModuleContext, f : () -> Unit) -> Unit {
   self.inst.close_hook.push(f)
