@@ -59,6 +59,23 @@ pub fn Headers::to_mut(Self) -> MutHeaders
 pub impl ToHeaders for Headers
 pub impl Default for Headers
 
+pub struct Html {
+  // private fields
+}
+pub fn Html::Html(raw~ : String) -> Self
+pub fn Html::build((HtmlBuilder) -> Unit) -> Self
+pub fn Html::escape(String) -> Self
+pub fn Html::raw(Self) -> String
+pub impl WriteToHtmlBuilder for Html
+
+pub struct HtmlBuilder {
+  // private fields
+}
+pub fn HtmlBuilder::HtmlBuilder() -> Self
+pub fn HtmlBuilder::html(Self) -> Html
+pub fn[T : WriteToHtmlBuilder] HtmlBuilder::write(Self, T) -> Unit
+pub fn HtmlBuilder::write_string(Self, String) -> Unit
+
 pub(all) struct Middleware((async (Request, Responder) -> Unit) -> async (Request, Responder) -> Unit)
 pub fn Middleware::chain(ArrayView[Self]) -> Self
 pub fn Middleware::compose(Self, Self) -> Self
@@ -125,7 +142,7 @@ pub async fn RequestBody::text(Self) -> String
 
 pub(all) struct Responder(async (Int, Headers) -> &WriteFlusher)
 pub async fn Responder::respond(Self, status? : Int, headers? : &ToHeaders) -> &WriteFlusher
-pub async fn Responder::send_html(Self, String, status? : Int, headers? : &ToHeaders) -> Unit
+pub async fn Responder::send_html(Self, Html, status? : Int, headers? : &ToHeaders) -> Unit
 pub async fn Responder::send_json(Self, Json, status? : Int, headers? : &ToHeaders, indent? : Int) -> Unit
 pub async fn Responder::send_text(Self, String, status? : Int, headers? : &ToHeaders) -> Unit
 pub async fn Responder::send_void(Self, status? : Int, headers? : &ToHeaders) -> Unit
@@ -166,4 +183,9 @@ pub impl ToHeaders for Map[String, String]
 
 pub(open) trait WriteFlusher : @io.Writer + Flusher {
 }
+
+pub trait WriteToHtmlBuilder {
+  fn write_to(Self, HtmlBuilder) -> Unit
+}
+pub impl WriteToHtmlBuilder for String
 

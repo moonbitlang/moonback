@@ -99,7 +99,7 @@ pub async fn Responder::send_text(
 /// Sends an HTML response with UTF-8 content type.
 pub async fn Responder::send_html(
   self : Responder,
-  html : String,
+  html : Html,
   status? : Int = 200,
   headers? : &ToHeaders,
 ) -> Unit {
@@ -111,7 +111,7 @@ pub async fn Responder::send_html(
       ..iter_optional_to_headers(headers),
     ],
   )
-  .write(html)
+  .write(html.raw())
 }
 
 ///|
