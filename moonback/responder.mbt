@@ -111,7 +111,7 @@ pub async fn Responder::send_html(
       ..iter_optional_to_headers(headers),
     ],
   )
-  .write(html.raw())
+  .write(html.raw)
 }
 
 ///|

@@ -33,11 +33,6 @@ pub fn Html::build(f : (HtmlBuilder) -> Unit) -> Html {
 }
 
 ///|
-pub fn Html::raw(self : Html) -> String {
-  self.raw
-}
-
-///|
 pub fn HtmlBuilder::HtmlBuilder() -> HtmlBuilder {
   { buffer: StringBuilder() }
 }

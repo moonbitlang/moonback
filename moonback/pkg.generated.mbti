@@ -41,6 +41,7 @@ pub struct Config {
 }
 pub fn Config::Config(max_connections? : Int, stop_timeout? : Double, trust_proxy? : Bool, custom? : ArrayView[CustomConfigEntry]) -> Self
 pub fn[T] Config::custom(TypedKey[T], T) -> CustomConfigEntry
+pub fn[T] Config::get_custom(Self, TypedKey[T]) -> T?
 pub impl Default for Config
 
 type Context
@@ -69,7 +70,6 @@ pub struct Html {
 pub fn Html::Html(raw~ : String) -> Self
 pub fn Html::build((HtmlBuilder) -> Unit) -> Self
 pub fn Html::escape(String) -> Self
-pub fn Html::raw(Self) -> String
 pub impl WriteToHtmlBuilder for Html
 
 pub struct HtmlBuilder {

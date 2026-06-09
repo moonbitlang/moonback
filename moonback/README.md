@@ -13,9 +13,10 @@ module-scoped dependency injection.
 - Route registration for `GET`, `POST`, and arbitrary HTTP methods
 - Middleware chaining
 - Typed query parameter and cookie helpers
-- Response helpers for text, HTML, JSON, empty responses, and WebSocket upgrade
+- Response helpers for text, type-safe HTML, JSON, empty responses, and WebSocket upgrade
 - App lifecycle cleanup with `ctx.on_close`
 - Module-only dependency injection using `TypedKey`
+- Typed custom application configuration values
 - Optional app mounting for composing independent apps
 
 ## Installation
@@ -25,7 +26,7 @@ Add MoonBack to your `moon.mod`:
 ```moonbit
 import {
   "moonbitlang/async@0.18.1",
-  "hackwaly/moonback@0.4.0",
+  "hackwaly/moonback@0.5.0",
 }
 ```
 
@@ -176,10 +177,25 @@ Use `Responder` helpers for common response types:
 
 ```moonbit
 res.send_text("ok")
-res.send_html("<h1>Hello</h1>")
+res.send_html(@moonback.Html(raw="<h1>Hello</h1>"))
 res.send_json({ "ok": true })
 res.send_void(status=204)
 ```
+
+`send_html` accepts `Html` instead of a plain `String`, so escaped content and
+trusted raw markup are explicit:
+
+```moonbit
+let page = @moonback.Html::build(builder => {
+  let title = "Hello, <MoonBack>"
+  builder <+ "<h1>\{title}</h1>"
+})
+
+res.send_html(page)
+```
+
+Use `Html::escape` for dynamic text and `Html(raw=...)` only for markup you
+already trust.
 
 For streaming responses, use `respond`:
 
@@ -360,6 +376,38 @@ Config fields:
 - `trust_proxy`: use proxy headers such as `X-Forwarded-For`
 - `max_connections`: limit concurrent accepted connections
 - `stop_timeout`: graceful shutdown timeout in seconds
+
+You can also attach typed custom values to app configuration. Custom config
+uses the same `TypedKey` pattern as dependency injection and request userdata,
+but values are stored on `Config` and are available through `app.config()`.
+
+```moonbit
+priv suberror AppConfig {
+  UploadRoot(String)
+}
+
+let upload_root_key : @moonback.TypedKey[String] = @moonback.TypedKey(
+  name="upload_root",
+  box=root => UploadRoot(root),
+  unbox=boxed => {
+    match boxed {
+      UploadRoot(root) => Some(root)
+      _ => None
+    }
+  },
+)
+
+let app = @moonback.App(
+  root_module(),
+  config=@moonback.Config(
+    custom=[
+      @moonback.Config::custom(upload_root_key, "/srv/uploads"),
+    ],
+  ),
+)
+
+let upload_root = app.config().get_custom(upload_root_key)
+```
 
 ## Cleanup hooks
 
