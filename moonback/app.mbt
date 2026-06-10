@@ -51,8 +51,10 @@ async fn AppInst::handle_request(
   let committed : Ref[Bool] = { val: false }
   let res = res.track_committed(committed)
   Middleware::chain(self.middlewares)(handler)(req, res) catch {
+    ClientDisconnected => ()
     err if @async.is_cancellation_error(err) => ()
-    _err => {
+    err if req.ctx.connection_unusable() => raise err
+    _ => {
       // TODO: log the error
       guard !committed.val else { return }
       guard !(req.ctx.conn_info is Upgraded(_, _)) else { return }
@@ -100,30 +102,41 @@ async fn App::serve_on_connection(
   peer_addr : @socket.Addr,
   no_protect~ : @async.CondVar,
 ) -> Unit {
-  let mut upgraded = false
-  for ; !upgraded; {
-    let raw_req = conn.read_request()
+  let tracked_conn = TrackedServerConnection::new(conn)
+  let mut reusable = true
+  for ; reusable; {
+    let raw_req = tracked_conn.read_request()
     @async.protect_from_cancel(() => {
       @async.with_task_group(group => {
         let (path, search) = split_path_search(raw_req.path)
         let req : Request = {
-          ctx: Context::new(self, Normal(raw_req, conn, peer_addr)),
+          ctx: Context::new(self, Normal(raw_req, tracked_conn, peer_addr)),
           meth: raw_req.meth,
           path,
           search,
           headers: Headers::from_request(raw_req.headers),
           params: {},
-          body: RequestBody::from_ready_stream(conn, group~),
+          body: RequestBody::from_ready_stream(tracked_conn, group~),
         }
         group.spawn_bg(no_wait=true, () => {
           no_protect.wait()
           group.return_immediately(())
         })
-        self.handle_request(req, Responder::from_conn(conn))
-        if req.ctx.conn_info is Upgraded(_, _) {
-          upgraded = true
+        let task = group.spawn(() => {
+          self.handle_request(req, Responder::from_conn(tracked_conn))
+        })
+        let unsubscribe = tracked_conn.on_close(() => task.cancel())
+        defer unsubscribe()
+        task.wait() catch {
+          ClientDisconnected => ()
+          err if @async.is_cancellation_error(err) &&
+            tracked_conn.is_client_disconnected() => ()
+          err => raise err
+        }
+        if req.ctx.conn_info is Upgraded(_, _) || tracked_conn.is_unusable() {
+          reusable = false
         } else {
-          conn.end_response()
+          tracked_conn.end_response()
         }
       })
     })

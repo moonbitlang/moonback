@@ -8,16 +8,7 @@
 pub(all) struct Responder(async (Int, Headers) -> &WriteFlusher)
 
 ///|
-impl WriteFlusher for @http.ServerConnection
-
-///|
-#warnings("-unused_value")
-impl Flusher for @http.ServerConnection with fn flush(self) {
-  self.flush()
-}
-
-///|
-fn Responder::from_conn(conn : @http.ServerConnection) -> Responder {
+fn Responder::from_conn(conn : TrackedServerConnection) -> Responder {
   Responder((status, h) => {
     // TODO: raise error if upgraded
     conn.send_response(
@@ -144,7 +135,7 @@ pub async fn Responder::upgrade(
   match req.ctx.conn_info {
     Mock => fail("Mock")
     Normal(raw_req, server_conn, peer_addr) => {
-      let ws = @websocket.from_http_server(raw_req, server_conn)
+      let ws = server_conn.upgrade(raw_req)
       req.ctx.conn_info = Upgraded(ws, peer_addr)
       ws
     }

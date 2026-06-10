@@ -10,7 +10,7 @@ struct Context {
 #warnings("-unused_field")
 priv enum ConnectionInfo {
   Mock
-  Normal(@http.Request, @http.ServerConnection, @socket.Addr)
+  Normal(@http.Request, TrackedServerConnection, @socket.Addr)
   Upgraded(@websocket.Conn, @socket.Addr)
 }
 
@@ -21,6 +21,14 @@ fn Context::new(app : App, conn_info : ConnectionInfo) -> Context {
     committed: false,
     conn_info,
     userdata: @immut/sorted_map.SortedMap::new(),
+  }
+}
+
+///|
+fn Context::connection_unusable(self : Context) -> Bool {
+  match self.conn_info {
+    Normal(_, conn, _) => conn.is_unusable()
+    Mock | Upgraded(_, _) => false
   }
 }
 

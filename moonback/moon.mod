@@ -1,6 +1,6 @@
 name = "hackwaly/moonback"
 
-version = "0.5.3"
+version = "0.5.4"
 
 description = "A web backend framework for MoonBit"
 

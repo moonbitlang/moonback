@@ -167,6 +167,18 @@ Useful request APIs:
 - `req.ip()`
 - `req.ips()`
 
+MoonBack cancels the in-flight handler when it observes that the client
+connection has been closed. This lets long-running handlers stop promptly and
+release server-side resources instead of continuing work for a client that can
+no longer receive the response.
+
+Disconnects are observed through request or response I/O, such as an I/O error
+while reading the request body or writing the response. If a handler does not
+read the request body and does not write a response, there may be no I/O
+operation that can discover the disconnect. Long-running or expensive handlers
+should consume `req.body` when they need MoonBack to notice clients that close
+the connection before the declared body has been fully sent.
+
 ## Responses
 
 Use `Responder` helpers for common response types:
