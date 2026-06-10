@@ -4,22 +4,19 @@ extenum @moonback.TypedBox += {
 }
 
 ///|
-let key : @moonback.TypedKey[String] = @moonback.TypedKey(
-  box=id => RequestId(id),
-  unbox=err => {
-    match err {
-      RequestId(id) => Some(id)
-      _ => None
-    }
-  },
-)
+let key : @moonback.TypedKey[String] = TypedKey(box=id => RequestId(id), unbox=err => {
+  match err {
+    RequestId(id) => Some(id)
+    _ => None
+  }
+})
 
 ///|
 pub fn new(
   generator~ : () -> String,
   header? : String? = Some("X-Request-ID"),
 ) -> @moonback.Middleware {
-  @moonback.Middleware(next => {
+  Middleware(next => {
     (req, res) => {
       let request_id = if req.app().config().trust_proxy &&
         header is Some(header) &&

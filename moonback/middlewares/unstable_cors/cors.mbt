@@ -68,7 +68,7 @@ pub fn new(
   credentials? : Bool = false,
   max_age? : Int = 86400,
 ) -> @moonback.Middleware {
-  @moonback.Middleware(next => {
+  Middleware(next => {
     (req, res) => {
       if is_preflight(req) {
         let headers = @moonback.MutHeaders()

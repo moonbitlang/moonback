@@ -5,10 +5,10 @@ let fixture_root = "moonback/middlewares/unstable_static/testdata"
 async fn send_request(
   middleware : @moonback.Middleware,
   path : String,
-  extra_routes? : @moonback.Module = @moonback.Module(_ctx => ()),
+  extra_routes? : @moonback.Module = Module(_ctx => ()),
 ) -> (Int, String?, String) {
   let app = @moonback.App(
-    @moonback.Module(ctx => {
+    Module(ctx => {
       ctx.add_middleware(middleware)
       (extra_routes.0)(ctx)
     }),
@@ -94,7 +94,7 @@ async test "static middleware keeps next response when next is not 404" {
   let (code, _content_type, body) = send_request(
     new(root=fixture_root, history_fallback=Some("index.html")),
     "/dashboard",
-    extra_routes=@moonback.Module(ctx => {
+    extra_routes=Module(ctx => {
       ctx.get("/dashboard", (_req, res) => {
         let writer = res.respond(status=200)
         writer.write("from route")
@@ -115,7 +115,7 @@ async test "static middleware uses history fallback when next returns 404" {
   let (code, _content_type, body) = send_request(
     new(root=fixture_root, history_fallback=Some("/index.html")),
     "/dashboard",
-    extra_routes=@moonback.Module(ctx => {
+    extra_routes=Module(ctx => {
       ctx.get("/dashboard", (_req, res) => {
         let writer = res.respond(status=404)
         writer.write("route 404")

@@ -15,7 +15,7 @@ fn method_name(meth : @http.RequestMethod) -> String {
 
 ///|
 pub fn new(logger : &@io.Writer) -> @moonback.Middleware {
-  @moonback.Middleware(next => {
+  Middleware(next => {
     (req, res) => {
       let start = @env.now()
       let mut status = 0

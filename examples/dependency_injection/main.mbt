@@ -9,7 +9,7 @@ extenum @moonback.TypedBox += {
 }
 
 ///|
-let greeter_key : @moonback.TypedKey[Greeter] = @moonback.TypedKey(
+let greeter_key : @moonback.TypedKey[Greeter] = TypedKey(
   name="greeter",
   box=greeter => GreeterDependency(greeter),
   unbox=err => {
@@ -22,7 +22,7 @@ let greeter_key : @moonback.TypedKey[Greeter] = @moonback.TypedKey(
 
 ///|
 fn greeter_module() -> @moonback.Module {
-  @moonback.Module(ctx => {
+  Module(ctx => {
     let greeter = ctx.require(greeter_key)
     ctx.get("/", (_req, res) => {
       res.send_text("\{greeter.prefix}, MoonBack dependency injection!")
@@ -32,7 +32,7 @@ fn greeter_module() -> @moonback.Module {
 
 ///|
 fn root_module() -> @moonback.Module {
-  @moonback.Module(ctx => {
+  Module(ctx => {
     ctx.provide(greeter_key, { prefix: "Hello" })
     ctx.use_(greeter_module())
   })

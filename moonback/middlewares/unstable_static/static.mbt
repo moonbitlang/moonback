@@ -181,7 +181,7 @@ pub fn new(
   rewrite_trailing_slash_index? : Bool = false,
   history_fallback? : String? = None,
 ) -> @moonback.Middleware {
-  @moonback.Middleware(next => {
+  Middleware(next => {
     (req, res) => {
       guard req.meth is Get || req.meth is Head else {
         next(req, res)

@@ -6,7 +6,7 @@ async fn run_handler(
 ) -> (String?, String?) {
   let mut seen_request_id = None
   let app = @moonback.App(
-    @moonback.Module(ctx => {
+    Module(ctx => {
       ctx.add_middleware(middleware)
       ctx.get("/", (req, res) => {
         seen_request_id = get(req)
