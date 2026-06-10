@@ -107,15 +107,14 @@ pub async fn Responder::send_html(
   status? : Int = 200,
   headers? : &ToHeaders,
 ) -> Unit {
-  self
-  .respond(
+  let w = self.respond(
     status~,
     headers=[
       ("Content-Type", "text/html; charset=utf-8"),
       ..iter_optional_to_headers(headers),
     ],
   )
-  .write(html.raw)
+  (html.f)(raw => w.write(raw))
 }
 
 ///|

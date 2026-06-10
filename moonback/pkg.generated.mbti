@@ -67,18 +67,15 @@ pub impl Default for Headers
 pub struct Html {
   // private fields
 }
-pub fn Html::Html(raw~ : String) -> Self
-pub fn Html::build((HtmlBuilder) -> Unit) -> Self
+pub fn Html::Html(async (HtmlBuilder) -> Unit) -> Self
 pub fn Html::escape(String) -> Self
+pub fn Html::raw(String) -> Self
+pub fn Html::raw_utf8_chunk(Bytes) -> Self
 pub impl WriteToHtmlBuilder for Html
 
-pub struct HtmlBuilder {
-  // private fields
-}
-pub fn HtmlBuilder::HtmlBuilder() -> Self
-pub fn HtmlBuilder::html(Self) -> Html
-pub fn[T : WriteToHtmlBuilder] HtmlBuilder::write(Self, T) -> Unit
-pub fn HtmlBuilder::write_string(Self, String) -> Unit
+type HtmlBuilder
+pub async fn[T : WriteToHtmlBuilder] HtmlBuilder::write(Self, T) -> Unit
+pub async fn HtmlBuilder::write_string(Self, String) -> Unit
 
 pub(all) struct Middleware((async (Request, Responder) -> Unit) -> async (Request, Responder) -> Unit)
 pub fn Middleware::chain(ArrayView[Self]) -> Self
@@ -190,7 +187,7 @@ pub(open) trait WriteFlusher : @io.Writer + Flusher {
 }
 
 pub trait WriteToHtmlBuilder {
-  fn write_to(Self, HtmlBuilder) -> Unit
+  async fn write_to(Self, HtmlBuilder) -> Unit
 }
 pub impl WriteToHtmlBuilder for String
 

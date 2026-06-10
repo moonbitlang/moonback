@@ -1,58 +1,54 @@
 ///|
 #valtype
 struct Html {
-  raw : String
+  f : async (async (Bytes) -> Unit) -> Unit
 }
 
 ///|
 pub trait WriteToHtmlBuilder {
-  fn write_to(Self, HtmlBuilder) -> Unit
+  async fn write_to(Self, HtmlBuilder) -> Unit
 }
 
 ///|
 #valtype
 struct HtmlBuilder {
-  buffer : StringBuilder
+  k : async (Bytes) -> Unit
 }
 
 ///|
-pub fn Html::Html(raw~ : String) -> Html {
-  { raw, }
+pub fn Html::raw(raw : String) -> Html {
+  { f: k => k(@utf8.encode(raw)) }
 }
 
 ///|
 pub fn Html::escape(str : String) -> Html {
-  Html(raw=html_escape(str))
+  Html::raw(html_escape(str))
 }
 
 ///|
-pub fn Html::build(f : (HtmlBuilder) -> Unit) -> Html {
-  let b = HtmlBuilder()
-  f(b)
-  b.html()
+pub fn Html::raw_utf8_chunk(chunk : Bytes) -> Html {
+  { f: k => k(chunk) }
 }
 
 ///|
-pub fn HtmlBuilder::HtmlBuilder() -> HtmlBuilder {
-  { buffer: StringBuilder() }
+pub fn Html::Html(f : async (HtmlBuilder) -> Unit) -> Html {
+  Html::{ f: k => f({ k, }) }
 }
 
 ///|
-pub fn HtmlBuilder::write_string(self : HtmlBuilder, str : String) -> Unit {
-  self.buffer.write_string(str)
+pub async fn HtmlBuilder::write_string(
+  self : HtmlBuilder,
+  str : String,
+) -> Unit {
+  (self.k)(@utf8.encode(str))
 }
 
 ///|
-pub fn[T : WriteToHtmlBuilder] HtmlBuilder::write(
+pub async fn[T : WriteToHtmlBuilder] HtmlBuilder::write(
   self : HtmlBuilder,
   value : T,
 ) -> Unit {
   value.write_to(self)
-}
-
-///|
-pub fn HtmlBuilder::html(self : HtmlBuilder) -> Html {
-  Html(raw=self.buffer.to_string())
 }
 
 ///|
@@ -68,7 +64,7 @@ pub impl WriteToHtmlBuilder for Html with fn write_to(
   self : Html,
   builder : HtmlBuilder,
 ) {
-  builder.write_string(self.raw)
+  (self.f)(raw => (builder.k)(raw))
 }
 
 ///|

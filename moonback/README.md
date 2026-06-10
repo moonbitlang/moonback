@@ -26,7 +26,7 @@ Add MoonBack to your `moon.mod`:
 ```moonbit
 import {
   "moonbitlang/async@0.19.2",
-  "hackwaly/moonback@0.5.5",
+  "hackwaly/moonback@0.6.1",
 }
 ```
 
@@ -185,7 +185,7 @@ Use `Responder` helpers for common response types:
 
 ```moonbit
 res.send_text("ok")
-res.send_html(@moonback.Html(raw="<h1>Hello</h1>"))
+res.send_html(@moonback.Html::raw("<h1>Hello</h1>"))
 res.send_json({ "ok": true })
 res.send_void(status=204)
 ```
@@ -194,7 +194,7 @@ res.send_void(status=204)
 trusted raw markup are explicit:
 
 ```moonbit
-let page = @moonback.Html::build(builder => {
+let page = @moonback.Html(builder => {
   let title = "Hello, <MoonBack>"
   builder <+ "<h1>\{title}</h1>"
 })
