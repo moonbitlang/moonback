@@ -32,7 +32,7 @@ pub fn Html::raw_utf8_chunk(chunk : Bytes) -> Html {
 
 ///|
 pub fn Html::Html(f : async (HtmlBuilder) -> Unit) -> Html {
-  Html::{ f: k => f({ k, }) }
+  { f: k => f({ k, }) }
 }
 
 ///|

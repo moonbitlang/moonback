@@ -85,11 +85,37 @@ pub fn ModuleContext::mount(
   if take_ownership {
     self.on_close(() => app.close())
   }
-  let path = if path.has_suffix("/") { path } else { path + "/" }
-  self.inst.router.add_fallback_route(path + "*path", (req, res) => {
-    let path = req.params["path"]
+  let path = mount_path(path)
+  self.inst.router.add_fallback_route(path, (req, res) => {
+    app.handle_request({ ..req, path: "/", params: {} }, res)
+  })
+  let prefix = if path == "/" { "/" } else { path + "/" }
+  self.inst.router.add_fallback_route(prefix + "*path", (req, res) => {
+    let path = mounted_request_path(req.params["path"])
     app.handle_request({ ..req, path, params: {} }, res)
   })
+}
+
+///|
+fn mount_path(path : String) -> String {
+  if path.is_empty() {
+    "/"
+  } else if path.length() > 1 && path.has_suffix("/") {
+    path[0:path.length() - 1].to_owned()
+  } else {
+    path
+  }
+}
+
+///|
+fn mounted_request_path(path : StringView) -> String {
+  if path.is_empty() {
+    "/"
+  } else if path.has_prefix("/") {
+    path.to_owned()
+  } else {
+    "/" + path.to_owned()
+  }
 }
 
 ///|
