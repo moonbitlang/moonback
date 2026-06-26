@@ -74,8 +74,8 @@ pub fn Html::raw_utf8_chunk(Bytes) -> Self
 pub impl WriteToHtmlBuilder for Html
 
 type HtmlBuilder
-pub async fn[T : WriteToHtmlBuilder] HtmlBuilder::write(Self, T) -> Unit
 pub async fn HtmlBuilder::write_string(Self, String) -> Unit
+pub async fn[T : WriteToHtmlBuilder] HtmlBuilder::write_string_interpolation(Self, T) -> Unit
 
 pub(all) struct Middleware((async (Request, Responder) -> Unit) -> async (Request, Responder) -> Unit)
 pub fn Middleware::chain(ArrayView[Self]) -> Self
