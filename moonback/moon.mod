@@ -1,11 +1,11 @@
 name = "hackwaly/moonback"
 
-version = "0.7.0"
+version = "0.8.0"
 
 description = "A web backend framework for MoonBit"
 
 import {
-  "moonbitlang/async@0.19.2",
+  "moonbitlang/async@0.20.3",
 }
 
 license = "Apache-2.0"

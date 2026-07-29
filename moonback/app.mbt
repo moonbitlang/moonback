@@ -39,7 +39,7 @@ fn AppInst::on_close(self : AppInst) -> Unit {
 }
 
 ///|
-async fn AppInst::handle_request(
+async fn AppInst::dispatch_request(
   self : AppInst,
   req : Request,
   res : Responder,
@@ -48,9 +48,18 @@ async fn AppInst::handle_request(
     None => default_handler
     Some({ handler, params }) => (req, res) => handler({ ..req, params, }, res)
   }
+  Middleware::chain(self.middlewares)(handler)(req, res)
+}
+
+///|
+async fn AppInst::handle_request(
+  self : AppInst,
+  req : Request,
+  res : Responder,
+) -> Unit {
   let committed : Ref[Bool] = { val: false }
   let res = res.track_committed(committed)
-  Middleware::chain(self.middlewares)(handler)(req, res) catch {
+  self.dispatch_request(req, res) catch {
     ClientDisconnected => ()
     err if @async.is_cancellation_error(err) => ()
     err if req.ctx.connection_unusable() => raise err

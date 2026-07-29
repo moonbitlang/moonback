@@ -73,7 +73,33 @@ pub fn ModuleContext::on_close(self : ModuleContext, f : () -> Unit) -> Unit {
 }
 
 ///|
+/// Controls whether an unhandled error from a mounted app propagates to its
+/// parent app or is handled by the mounted app's own final error boundary.
+pub(all) enum MountErrorMode {
+  Propagate
+  Isolate
+}
+
+///|
+async fn App::handle_mounted_request(
+  self : App,
+  req : Request,
+  res : Responder,
+  error_mode : MountErrorMode,
+) -> Unit {
+  match error_mode {
+    Propagate => self.inst.dispatch_request(req, res)
+    Isolate => self.handle_request(req, res)
+  }
+}
+
+///|
 /// Mounts another app under `path`.
+///
+/// By default, unhandled errors propagate through the parent app's middleware
+/// and final error boundary. Set `error_mode` to `Isolate` to make the mounted
+/// app handle its own unhandled errors instead.
+///
 /// When `take_ownership` is true (`true` by default), the mounted app is closed
 /// with the parent.
 pub fn ModuleContext::mount(
@@ -81,18 +107,23 @@ pub fn ModuleContext::mount(
   path : String,
   app : App,
   take_ownership? : Bool = true,
+  error_mode? : MountErrorMode = Propagate,
 ) -> Unit raise RouterError {
   if take_ownership {
     self.on_close(() => app.close())
   }
   let path = mount_path(path)
   self.inst.router.add_fallback_route(path, (req, res) => {
-    app.handle_request({ ..req, path: "/", params: {} }, res)
+    app.handle_mounted_request(
+      { ..req, path: "/", params: {} },
+      res,
+      error_mode,
+    )
   })
   let prefix = if path == "/" { "/" } else { path + "/" }
   self.inst.router.add_fallback_route(prefix + "*path", (req, res) => {
     let path = mounted_request_path(req.params["path"])
-    app.handle_request({ ..req, path, params: {} }, res)
+    app.handle_mounted_request({ ..req, path, params: {} }, res, error_mode)
   })
 }
 

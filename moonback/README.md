@@ -25,8 +25,8 @@ Add MoonBack to your `moon.mod`:
 
 ```moonbit
 import {
-  "moonbitlang/async@0.19.2",
-  "hackwaly/moonback@0.6.4",
+  "moonbitlang/async@0.20.3",
+  "hackwaly/moonback@0.8.0",
 }
 ```
 
@@ -444,8 +444,19 @@ let app = @moonback.App(ctx => {
 })
 ```
 
-Mounted apps are independent apps. By default, the parent app owns and closes
-the mounted app.
+Mounted apps keep their own routes and middleware. By default, their unhandled
+errors propagate through the parent app's middleware and final error boundary,
+so application-wide error handling can be registered once on the parent.
+
+Use `error_mode=Isolate` when a mounted app should handle its own unhandled
+errors instead:
+
+```moonbit
+ctx.mount("/api", api, error_mode=@moonback.Isolate)
+```
+
+By default, the parent app owns and closes the mounted app. Set
+`take_ownership=false` when its lifecycle is managed elsewhere.
 
 ## Development
 

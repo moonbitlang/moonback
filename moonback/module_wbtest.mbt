@@ -5,6 +5,9 @@ async fn http_get_text(port : Int, path : String) -> (Int, String) {
 }
 
 ///|
+suberror MountedHandlerFailure
+
+///|
 async test "mounted app receives slash-prefixed paths" {
   let child = App(
     Module(ctx => {
@@ -82,6 +85,138 @@ async test "static mount takes priority over root mount" {
     @test.assert_eq(
       http_get_text(port, "/assets/app.css"),
       (200, "asset:/app.css"),
+    )
+  })
+}
+
+///|
+async test "mounted app errors propagate to parent middleware by default" {
+  let child = App(
+    Module(ctx => ctx.get("/fail", (_req, _res) => raise MountedHandlerFailure)),
+  )
+  let app = App(
+    Module(ctx => {
+      ctx.add_middleware(
+        Middleware(next => {
+          (req, res) => {
+            next(req, res) catch {
+              MountedHandlerFailure =>
+                res.send_text("caught by parent", status=502)
+              err => raise err
+            }
+          }
+        }),
+      )
+      ctx.mount("/api", child)
+    }),
+  )
+  defer app.close()
+  @async.with_task_group(group => {
+    let server = listen(port=0)
+    let task = group.spawn(() => app.serve(server))
+    defer task.cancel()
+    @test.assert_eq(
+      http_get_text(server.addr.port(), "/api/fail"),
+      (502, "caught by parent"),
+    )
+  })
+}
+
+///|
+async test "mounted app middleware can handle errors before propagation" {
+  let child = App(
+    Module(ctx => {
+      ctx.add_middleware(
+        Middleware(next => {
+          (req, res) => {
+            next(req, res) catch {
+              MountedHandlerFailure =>
+                res.send_text("caught by child", status=409)
+              err => raise err
+            }
+          }
+        }),
+      )
+      ctx.get("/fail", (_req, _res) => raise MountedHandlerFailure)
+    }),
+  )
+  let app = App(
+    Module(ctx => {
+      ctx.add_middleware(
+        Middleware(next => {
+          (req, res) => {
+            next(req, res) catch {
+              MountedHandlerFailure =>
+                res.send_text("caught by parent", status=502)
+              err => raise err
+            }
+          }
+        }),
+      )
+      ctx.mount("/api", child)
+    }),
+  )
+  defer app.close()
+  @async.with_task_group(group => {
+    let server = listen(port=0)
+    let task = group.spawn(() => app.serve(server))
+    defer task.cancel()
+    @test.assert_eq(
+      http_get_text(server.addr.port(), "/api/fail"),
+      (409, "caught by child"),
+    )
+  })
+}
+
+///|
+async test "mounted app can isolate errors from parent middleware" {
+  let child = App(
+    Module(ctx => ctx.get("/fail", (_req, _res) => raise MountedHandlerFailure)),
+  )
+  let app = App(
+    Module(ctx => {
+      ctx.add_middleware(
+        Middleware(next => {
+          (req, res) => {
+            next(req, res) catch {
+              MountedHandlerFailure =>
+                res.send_text("caught by parent", status=502)
+              err => raise err
+            }
+          }
+        }),
+      )
+      ctx.mount("/api", child, error_mode=Isolate)
+    }),
+  )
+  defer app.close()
+  @async.with_task_group(group => {
+    let server = listen(port=0)
+    let task = group.spawn(() => app.serve(server))
+    defer task.cancel()
+    @test.assert_eq(http_get_text(server.addr.port(), "/api/fail"), (500, ""))
+  })
+}
+
+///|
+async test "propagated error does not replace a committed response" {
+  let child = App(
+    Module(ctx => {
+      ctx.get("/fail", (_req, res) => {
+        res.send_text("started", status=202)
+        raise MountedHandlerFailure
+      })
+    }),
+  )
+  let app = App(Module(ctx => ctx.mount("/api", child)))
+  defer app.close()
+  @async.with_task_group(group => {
+    let server = listen(port=0)
+    let task = group.spawn(() => app.serve(server))
+    defer task.cancel()
+    @test.assert_eq(
+      http_get_text(server.addr.port(), "/api/fail"),
+      (202, "started"),
     )
   })
 }
