@@ -23,6 +23,9 @@ suberror UnusableReuseTimeout
 suberror HandlerFailure
 
 ///|
+extend TrackedServerConnection with @io.Writer::{write_once}
+
+///|
 struct NoopWriteFlusher {}
 
 ///|

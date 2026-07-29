@@ -34,10 +34,7 @@ pub fn Config::Config(
     trust_proxy,
     custom: match custom {
       None => @immut/sorted_map.SortedMap::new()
-      Some(entries) =>
-        @immut/sorted_map.SortedMap::from_array(
-          entries.map(it => (it.key, it.value)),
-        )
+      Some(entries) => SortedMap(entries.map(it => (it.key, it.value)))
     },
   }
 }
@@ -55,3 +52,6 @@ pub fn[T] Config::get_custom(self : Config, key : TypedKey[T]) -> T? {
 pub impl Default for Config with fn default() -> Config {
   Config()
 }
+
+///|
+pub extend Config with Default::{default}

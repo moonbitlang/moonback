@@ -1,5 +1,5 @@
 ///|
-let fixture_root = "moonback/middlewares/unstable_static/testdata"
+let fixture_root = "middlewares/unstable_static/testdata"
 
 ///|
 async fn send_request(

@@ -104,7 +104,7 @@ fn cookie_to_header_value(cookie : @http.Cookie) -> String {
 
 ///|
 fn parse_cookie(str : StringView) -> Map[String, String] {
-  let cookies = {}
+  let cookies = Map([])
   for parsed = 0 {
     let pair_end = if str[parsed:].find(";") is Some(pair_end) {
       parsed + pair_end

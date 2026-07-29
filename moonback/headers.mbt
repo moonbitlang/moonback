@@ -123,6 +123,9 @@ pub impl Default for Headers with fn default() -> Headers {
 }
 
 ///|
+pub extend Headers with Default::{default}
+
+///|
 /// Converts any `ToHeaders` value into `Headers`.
 pub fn Headers::from(from : &ToHeaders) -> Headers {
   from.to_headers()
@@ -278,13 +281,19 @@ pub impl ToHeaders for MutHeaders with fn to_headers(self) -> Headers {
 }
 
 ///|
+pub extend MutHeaders with ToHeaders::{to_headers}
+
+///|
 pub impl ToHeaders for Headers with fn to_headers(self) -> Headers {
   self
 }
 
 ///|
+pub extend Headers with ToHeaders::{to_headers}
+
+///|
 pub impl ToHeaders for Map[String, String] with fn to_headers(self) -> Headers {
-  let headers = {}
+  let headers = Map([])
   let set_cookie = []
   for k, v in self {
     let k = k.to_lower()
@@ -300,7 +309,7 @@ pub impl ToHeaders for Map[String, String] with fn to_headers(self) -> Headers {
 
 ///|
 pub impl ToHeaders for Array[(String, String)] with fn to_headers(self) -> Headers {
-  let headers = {}
+  let headers = Map([])
   let set_cookie = []
   for pair in self {
     let (k, v) = pair

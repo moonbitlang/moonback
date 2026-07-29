@@ -183,3 +183,6 @@ pub fn ModuleContext::add_middleware(
 pub impl Extension for Module with fn initialize(self, ctx) {
   self(ctx)
 }
+
+///|
+pub extend Module with Extension::{initialize}

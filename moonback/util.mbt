@@ -9,6 +9,12 @@ pub(open) trait Flusher {
 }
 
 ///|
+pub extend &WriteFlusher with @io.Writer::{write_once, write, write_reader}
+
+///|
+pub extend &WriteFlusher with Flusher::{flush}
+
+///|
 /// Creates an HTTP server listener bound to the given host (IP address only) and port.
 ///
 /// If `host` is the IPv6 wildcard address `[::]`

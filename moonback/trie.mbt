@@ -168,7 +168,7 @@ priv struct MatchResult[T] {
 /// Returns the payload and extracted parameters if found
 fn[T] Trie::search(self : Trie[T], path : StringView) -> MatchResult[T]? {
   let segments = parse_path(path)
-  let params : Map[StringView, StringView] = {}
+  let params : Map[StringView, StringView] = Map([])
   match self.search_recursive(segments, params) {
     Some(node) =>
       match node.payload {

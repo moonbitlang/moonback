@@ -160,6 +160,9 @@ pub impl WriteToHtmlBuilder for Html with fn write_to(
 }
 
 ///|
+pub extend Html with WriteToHtmlBuilder::{write_to}
+
+///|
 fn html_escape(s : String) -> String {
   // TODO: Use lexmatch
   let b = StringBuilder()

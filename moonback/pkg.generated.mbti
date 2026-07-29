@@ -41,6 +41,7 @@ pub struct Config {
 }
 pub fn Config::Config(max_connections? : Int, stop_timeout? : Double, trust_proxy? : Bool, custom? : ArrayView[CustomConfigEntry]) -> Self
 pub fn[T] Config::custom(TypedKey[T], T) -> CustomConfigEntry
+pub fn Config::default() -> Self
 pub fn[T] Config::get_custom(Self, TypedKey[T]) -> T?
 pub impl Default for Config
 
@@ -51,26 +52,25 @@ pub fn Context::with_middlewares(Self, ArrayView[Middleware], async (Request, Re
 
 type CustomConfigEntry
 
-pub struct Headers {
-  // private fields
-}
+type Headers
 pub fn Headers::Headers() -> Self
+pub fn Headers::default() -> Self
 pub fn Headers::from(&ToHeaders) -> Self
 pub fn Headers::get(Self, String) -> StringView?
 pub fn Headers::get_all(Self, String) -> ReadOnlyArray[StringView]
 pub fn Headers::get_list(Self, String) -> ReadOnlyArray[StringView]
 pub fn Headers::iter(Self) -> Iter[(String, String)]
+pub fn Headers::to_headers(Self) -> Self
 pub fn Headers::to_mut(Self) -> MutHeaders
 pub impl ToHeaders for Headers
 pub impl Default for Headers
 
-pub struct Html {
-  // private fields
-}
+type Html
 pub fn Html::Html(async (HtmlBuilder) -> Unit) -> Self
 pub fn Html::escape(String) -> Self
 pub fn Html::raw(String) -> Self
 pub fn Html::raw_utf8_chunk(Bytes) -> Self
+pub async fn Html::write_to(Self, HtmlBuilder) -> Unit
 pub impl WriteToHtmlBuilder for Html
 
 type HtmlBuilder
@@ -83,6 +83,7 @@ pub fn Middleware::compose(Self, Self) -> Self
 pub fn Middleware::pass_through() -> Self
 
 pub(all) struct Module(async (ModuleContext) -> Unit)
+pub async fn Module::initialize(Self, ModuleContext) -> Unit
 pub impl Extension for Module
 
 type ModuleContext
@@ -98,9 +99,7 @@ pub fn[T] ModuleContext::require(Self, TypedKey[T]) -> T raise DependencyError
 pub fn[T] ModuleContext::resolve(Self, TypedKey[T]) -> T?
 pub async fn ModuleContext::use_(Self, &Extension) -> Unit
 
-pub struct MutHeaders {
-  // private fields
-}
+type MutHeaders
 pub fn MutHeaders::MutHeaders() -> Self
 pub fn MutHeaders::add(Self, String, String) -> Unit
 pub fn MutHeaders::add_set_cookie(Self, @http.Cookie) -> Unit
@@ -110,6 +109,7 @@ pub fn MutHeaders::get_all(Self, String) -> ReadOnlyArray[StringView]
 pub fn MutHeaders::iter(Self) -> Iter[(String, String)]
 pub fn MutHeaders::remove(Self, String) -> Unit
 pub fn MutHeaders::set(Self, String, String) -> Unit
+pub fn MutHeaders::to_headers(Self) -> Headers
 pub fn MutHeaders::to_immut(Self) -> Headers
 pub impl ToHeaders for MutHeaders
 
@@ -153,9 +153,7 @@ pub async fn Responder::upgrade(Self, Request) -> @websocket.Conn
 pub extenum TypedBox {
 }
 
-pub struct TypedKey[T] {
-  // private fields
-}
+type TypedKey[T]
 pub fn[T] TypedKey::TypedKey(name? : String, box~ : (T) -> TypedBox, unbox~ : (TypedBox) -> T?) -> Self[T]
 pub fn[T] TypedKey::name(Self[T]) -> String
 
