@@ -26,7 +26,7 @@ Add MoonBack to your `moon.mod`:
 ```moonbit
 import {
   "moonbitlang/async@0.21.0",
-  "hackwaly/moonback@0.8.0",
+  "hackwaly/moonback@0.8.1",
 }
 ```
 
