@@ -15,4 +15,3 @@ pub fn new(origin? : String, methods? : String, allow_headers? : String, expose_
 // Type aliases
 
 // Traits
-

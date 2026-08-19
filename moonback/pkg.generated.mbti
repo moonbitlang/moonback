@@ -193,4 +193,3 @@ pub trait WriteToHtmlBuilder {
   async fn write_to(Self, HtmlBuilder) -> Unit
 }
 pub impl WriteToHtmlBuilder for String
-

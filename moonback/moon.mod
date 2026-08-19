@@ -5,7 +5,7 @@ version = "0.8.0"
 description = "A web backend framework for MoonBit"
 
 import {
-  "moonbitlang/async@0.20.3",
+  "moonbitlang/async@0.21.0",
 }
 
 license = "Apache-2.0"

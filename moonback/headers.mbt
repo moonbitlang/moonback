@@ -132,9 +132,26 @@ pub fn Headers::from(from : &ToHeaders) -> Headers {
 }
 
 ///|
-fn Headers::from_request(headers : Map[String, String]) -> Headers {
-  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie: [] }
+fn Headers::from_request(headers : @http.Headers) -> Headers {
+  let normalized = Map([])
+  for name, value in headers {
+    normalized[name.0.to_lower()] = value
+  }
+  let store = {
+    owner_id: HEADERS_SHARED_OWNER_ID,
+    headers: normalized,
+    set_cookie: [],
+  }
   { store, }
+}
+
+///|
+fn to_http_headers(headers : Map[String, String]) -> @http.Headers {
+  let result = Map([])
+  for name, value in headers {
+    result[@http.CaseInsensitiveString(name)] = value
+  }
+  result
 }
 
 ///|
