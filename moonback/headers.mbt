@@ -8,7 +8,7 @@ const HEADERS_SHARED_OWNER_ID : Int = -1
 /// A mutable HTTP header collection with special handling for `Set-Cookie`.
 priv struct HeaderStore {
   mut owner_id : Int
-  headers : Map[String, String]
+  headers : @http.Headers
   mut set_cookie : Array[StringView]
 }
 
@@ -24,7 +24,12 @@ fn HeaderStore::copy(self : HeaderStore, owner_id? : Int) -> HeaderStore {
 ///|
 fn HeaderStore::iter(self : HeaderStore) -> Iter[(String, String)] {
   Iter::concat(
-    self.headers.iter(),
+    self.headers
+    .iter()
+    .map(pair => {
+      let (name, value) = pair
+      (name.0.to_lower(), value)
+    }),
     self.set_cookie.iter().map(cookie => ("set-cookie", cookie.to_owned())),
   )
 }
@@ -133,25 +138,8 @@ pub fn Headers::from(from : &ToHeaders) -> Headers {
 
 ///|
 fn Headers::from_request(headers : @http.Headers) -> Headers {
-  let normalized = Map([])
-  for name, value in headers {
-    normalized[name.0.to_lower()] = value
-  }
-  let store = {
-    owner_id: HEADERS_SHARED_OWNER_ID,
-    headers: normalized,
-    set_cookie: [],
-  }
+  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie: [] }
   { store, }
-}
-
-///|
-fn to_http_headers(headers : Map[String, String]) -> @http.Headers {
-  let result = Map([])
-  for name, value in headers {
-    result[@http.CaseInsensitiveString(name)] = value
-  }
-  result
 }
 
 ///|
@@ -310,7 +298,7 @@ pub extend Headers with ToHeaders::{to_headers}
 
 ///|
 pub impl ToHeaders for Map[String, String] with fn to_headers(self) -> Headers {
-  let headers = Map([])
+  let headers : @http.Headers = Map([])
   let set_cookie = []
   for k, v in self {
     let k = k.to_lower()
@@ -326,7 +314,7 @@ pub impl ToHeaders for Map[String, String] with fn to_headers(self) -> Headers {
 
 ///|
 pub impl ToHeaders for Array[(String, String)] with fn to_headers(self) -> Headers {
-  let headers = Map([])
+  let headers : @http.Headers = Map([])
   let set_cookie = []
   for pair in self {
     let (k, v) = pair
