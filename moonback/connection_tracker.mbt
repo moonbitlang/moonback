@@ -105,7 +105,7 @@ async fn TrackedServerConnection::send_response(
   self : TrackedServerConnection,
   code : Int,
   reason : String,
-  extra_headers? : Map[String, String] = {},
+  extra_headers? : @http.Headers = Map([]),
   cookies? : Array[@http.Cookie] = [],
 ) -> Unit {
   self.conn.send_response(code, reason, extra_headers~, cookies~) catch {

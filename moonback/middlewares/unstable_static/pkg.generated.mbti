@@ -15,4 +15,3 @@ pub fn new(root~ : String, rewrite_trailing_slash_index? : Bool, history_fallbac
 // Type aliases
 
 // Traits
-

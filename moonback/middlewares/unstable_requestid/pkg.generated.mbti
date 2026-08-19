@@ -17,4 +17,3 @@ pub fn new(generator~ : () -> String, header? : String?) -> @moonback.Middleware
 // Type aliases
 
 // Traits
-

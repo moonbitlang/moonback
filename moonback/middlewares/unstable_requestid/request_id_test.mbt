@@ -2,7 +2,7 @@
 async fn run_handler(
   middleware : @moonback.Middleware,
   config? : @moonback.Config = @moonback.Config::default(),
-  request_headers? : Map[String, String] = {},
+  request_headers? : @http.Headers = {},
 ) -> (String?, String?) {
   let mut seen_request_id = None
   let app = @moonback.App(
