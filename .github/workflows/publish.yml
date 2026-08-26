@@ -27,6 +27,9 @@ jobs:
       - name: Show toolchain version
         run: moon version --all
 
+      - name: Update package registry
+        run: moon update
+
       - name: Validate release version
         if: github.event_name == 'release'
         env:

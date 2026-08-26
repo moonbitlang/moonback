@@ -31,6 +31,9 @@ jobs:
       - name: Show toolchain version
         run: moon version --all
 
+      - name: Update package registry
+        run: moon update
+
       - name: Check formatting
         run: moon fmt --check
 

@@ -479,6 +479,7 @@ By default, the parent app owns and closes the mounted app. Set
 Useful commands:
 
 ```bash
+moon update
 moon check
 moon test
 moon fmt

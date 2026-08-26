@@ -21,6 +21,7 @@ of opening a public issue.
 From the repository root, run:
 
 ```bash
+moon update
 moon fmt --check
 moon check --deny-warn
 moon test --deny-warn
