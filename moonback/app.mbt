@@ -168,49 +168,45 @@ pub async fn App::serve(
 ) -> Unit {
   let no_protect = @async.CondVar::Cond()
   @async.with_task_group(group => {
-    try {
-      if self.inst.config.max_connections is Some(limit) {
-        let limit = @async.Semaphore(limit)
-        for ;; {
-          let (conn, peer_addr) = listener.accept()
-          limit.acquire()
-          group.spawn_bg(allow_failure=true, () => {
-            defer {
-              conn.close()
-              limit.release()
-            }
-            self.serve_on_connection(conn, peer_addr, no_protect~)
-          })
-        }
-      } else {
-        for ;; {
-          let (conn, peer_addr) = listener.accept()
-          group.spawn_bg(allow_failure=true, () => {
-            defer conn.close()
-            self.serve_on_connection(conn, peer_addr, no_protect~)
-          })
-        }
-      }
+    errdefer {
       if take_ownership {
         listener.close()
       }
-    } catch {
-      err => {
-        if take_ownership {
-          listener.close()
-        }
-        if @async.is_cancellation_error(err) &&
-          self.inst.config.stop_timeout is timeout &&
-          timeout > 0 {
-          group.spawn_bg(() => {
-            @async.sleep((timeout * 1000).to_int())
-            no_protect.broadcast()
-          })
-        } else {
+      if @async.is_being_cancelled() &&
+        self.inst.config.stop_timeout is timeout &&
+        timeout > 0 {
+        group.spawn_bg(() => {
+          @async.sleep((timeout * 1000).to_int())
           no_protect.broadcast()
-        }
-        raise err
+        })
+      } else {
+        no_protect.broadcast()
       }
+    }
+    if self.inst.config.max_connections is Some(limit) {
+      let limit = @async.Semaphore(limit)
+      for ;; {
+        let (conn, peer_addr) = listener.accept()
+        limit.acquire()
+        group.spawn_bg(allow_failure=true, () => {
+          defer {
+            conn.close()
+            limit.release()
+          }
+          self.serve_on_connection(conn, peer_addr, no_protect~)
+        })
+      }
+    } else {
+      for ;; {
+        let (conn, peer_addr) = listener.accept()
+        group.spawn_bg(allow_failure=true, () => {
+          defer conn.close()
+          self.serve_on_connection(conn, peer_addr, no_protect~)
+        })
+      }
+    }
+    if take_ownership {
+      listener.close()
     }
   })
 }

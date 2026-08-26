@@ -15,7 +15,7 @@ async fn send_request(
   path : String,
   status? : Int = 204,
 ) -> String {
-  let captured = { log: StringBuilder::new() }
+  let captured = { log: StringBuilder() }
   let app = @moonback.App(
     Module(ctx => {
       ctx.add_middleware(new(captured))

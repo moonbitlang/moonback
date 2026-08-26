@@ -69,7 +69,7 @@ fn parse_set_cookie(str : StringView) -> @http.Cookie raise {
 
 ///|
 fn cookie_to_header_value(cookie : @http.Cookie) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(cookie.name)
   buf.write_string("=")
   buf.write_string(cookie.value)
