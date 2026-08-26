@@ -1,8 +1,8 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "hackwaly/moonback/middlewares/unstable_cors"
+package "moonbitlang/moonback/middlewares/unstable_cors"
 
 import {
-  "hackwaly/moonback",
+  "moonbitlang/moonback",
 }
 
 // Values

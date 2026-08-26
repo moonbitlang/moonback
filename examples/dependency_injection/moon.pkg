@@ -1,6 +1,6 @@
 import {
   "moonbitlang/async",
-  "hackwaly/moonback",
+  "moonbitlang/moonback",
 }
 
 supported_targets = "native"

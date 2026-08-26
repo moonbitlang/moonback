@@ -1,9 +1,9 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "hackwaly/moonback/middlewares/unstable_logreq"
+package "moonbitlang/moonback/middlewares/unstable_logreq"
 
 import {
-  "hackwaly/moonback",
   "moonbitlang/async/io",
+  "moonbitlang/moonback",
 }
 
 // Values

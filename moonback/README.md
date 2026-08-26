@@ -26,7 +26,7 @@ Add MoonBack to your `moon.mod`:
 ```moonbit
 import {
   "moonbitlang/async@0.21.0",
-  "hackwaly/moonback@0.8.1",
+  "moonbitlang/moonback@0.8.2",
 }
 ```
 
@@ -35,6 +35,22 @@ MoonBack is intended for the native target:
 ```moonbit
 preferred_target = "native"
 ```
+
+## Migrating from `hackwaly/moonback`
+
+Starting with version 0.8.2, MoonBack is published as
+`moonbitlang/moonback`. Replace the old dependency in `moon.mod`:
+
+```moonbit
+import {
+  "moonbitlang/moonback@0.8.2",
+}
+```
+
+Application source code can continue to use the `@moonback` package alias.
+If you import an experimental middleware directly, update its full package
+path from `hackwaly/moonback/middlewares/...` to
+`moonbitlang/moonback/middlewares/...` as well.
 
 ## Quick start
 
@@ -227,7 +243,7 @@ Add the WebSocket package to your `moon.pkg` when you need to handle messages:
 ```moonbit
 import {
   "moonbitlang/async/websocket",
-  "hackwaly/moonback",
+  "moonbitlang/moonback",
 }
 ```
 
@@ -473,4 +489,4 @@ moon info
 
 ## License
 
-Apache-2.0
+Licensed under the [Apache License 2.0](LICENSE).

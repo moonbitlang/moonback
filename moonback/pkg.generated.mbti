@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "hackwaly/moonback"
+package "moonbitlang/moonback"
 
 import {
   "moonbitlang/async/http",
@@ -62,8 +62,8 @@ pub fn Headers::get_list(Self, String) -> ReadOnlyArray[StringView]
 pub fn Headers::iter(Self) -> Iter[(String, String)]
 pub fn Headers::to_headers(Self) -> Self
 pub fn Headers::to_mut(Self) -> MutHeaders
-pub impl ToHeaders for Headers
 pub impl Default for Headers
+pub impl ToHeaders for Headers
 
 type Html
 pub fn Html::Html(async (HtmlBuilder) -> Unit) -> Self

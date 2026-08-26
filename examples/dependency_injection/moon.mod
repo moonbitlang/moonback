@@ -1,8 +1,8 @@
 name = "dependency_injection"
 
 import {
-  "moonbitlang/async@0.18.1",
-  "hackwaly/moonback@0.3.0",
+  "moonbitlang/async@0.21.0",
+  "moonbitlang/moonback@0.8.2",
 }
 
 preferred_target = "native"

@@ -1,4 +1,4 @@
 import {
-  "hackwaly/moonback",
+  "moonbitlang/moonback",
   "moonbitlang/async/http",
 }

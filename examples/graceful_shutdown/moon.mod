@@ -1,8 +1,8 @@
 name = "graceful_shutdown"
 
 import {
-  "moonbitlang/async@0.17.1",
-  "hackwaly/moonback@0.1.0",
+  "moonbitlang/async@0.21.0",
+  "moonbitlang/moonback@0.8.2",
 }
 
 preferred_target = "native"

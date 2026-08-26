@@ -1,8 +1,8 @@
 name = "static_middleware"
 
 import {
-  "moonbitlang/async@0.18.0",
-  "hackwaly/moonback@0.1.0",
+  "moonbitlang/async@0.21.0",
+  "moonbitlang/moonback@0.8.2",
 }
 
 preferred_target = "native"

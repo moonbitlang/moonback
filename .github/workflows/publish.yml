@@ -1,0 +1,61 @@
+name: Publish
+
+on:
+  release:
+    types:
+      - released
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to Mooncakes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Show toolchain version
+        run: moon version --all
+
+      - name: Validate release version
+        if: github.event_name == 'release'
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION=$(awk -F '"' '/^version = / { print $2; exit }' moonback/moon.mod)
+          test "$RELEASE_TAG" = "v$VERSION"
+
+      - name: Check formatting
+        run: moon fmt --check
+
+      - name: Check warnings
+        run: moon check --deny-warn
+
+      - name: Run tests
+        run: moon test --deny-warn
+
+      - name: Check generated interfaces
+        run: |
+          moon info
+          git diff --exit-code
+
+      - name: Publish module
+        working-directory: moonback
+        env:
+          MOONCAKES_CREDENTIALS: ${{ secrets.MOONCAKES_MOONBITLANG_TOKEN }}
+        run: |
+          test -n "$MOONCAKES_CREDENTIALS"
+          install -m 600 /dev/null "$HOME/.moon/credentials.json"
+          printf '%s' "$MOONCAKES_CREDENTIALS" > "$HOME/.moon/credentials.json"
+          trap 'rm -f "$HOME/.moon/credentials.json"' EXIT
+          moon publish

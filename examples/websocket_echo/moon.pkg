@@ -3,7 +3,7 @@ import {
   "moonbitlang/async",
   "moonbitlang/async/io",
   "moonbitlang/async/websocket",
-  "hackwaly/moonback",
+  "moonbitlang/moonback",
 }
 
 supported_targets = "native"
