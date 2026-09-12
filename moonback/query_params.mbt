@@ -75,7 +75,7 @@ fn parse_query_pair(pair : StringView) -> (String, String) {
 ///|
 fn parse_query_params(search : StringView?) -> QueryParams {
   let entries : Array[(String, String)] = []
-  guard search is Some(search) else { return { values: {}, entries } }
+  guard search is Some(search) else { return { values: {}, entries, } }
   let values : Map[String, Array[String]] = Map([])
   for parsed = 0 {
     let pair_end = if search[parsed:].find("&") is Some(pair_end) {
@@ -99,7 +99,7 @@ fn parse_query_params(search : StringView?) -> QueryParams {
       continue pair_end + 1
     }
   }
-  { values: values.map((_k, v) => ReadOnlyArray::from_array(v)), entries }
+  { values: values.map((_k, v) => ReadOnlyArray::from_array(v)), entries, }
 }
 
 ///|

@@ -19,7 +19,7 @@ priv struct Route {
 
 ///|
 fn Route::new() -> Route {
-  { get: None, post: None, other: [], fallback: None }
+  { get: None, post: None, other: [], fallback: None, }
 }
 
 ///|
@@ -112,7 +112,7 @@ fn Route::add_fallback_with_path(
 
 ///|
 fn Router::new() -> Router {
-  { tree: Trie::root() }
+  { tree: Trie::root(), }
 }
 
 ///|
@@ -122,7 +122,7 @@ fn Router::route_for_path(
 ) -> (Route, Map[StringView, StringView])? {
   match self.tree.search(path) {
     None => None
-    Some({ payload, params }) => Some((payload, params))
+    Some({ payload, params, }) => Some((payload, params))
   }
 }
 
@@ -176,7 +176,7 @@ fn Router::route(
     Some((route, params)) =>
       match route.handler_for(meth) {
         None => None
-        Some(handler) => Some({ handler, params })
+        Some(handler) => Some({ handler, params, })
       }
   }
 }

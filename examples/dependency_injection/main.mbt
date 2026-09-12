@@ -33,7 +33,7 @@ fn greeter_module() -> @moonback.Module {
 ///|
 fn root_module() -> @moonback.Module {
   Module(ctx => {
-    ctx.provide(greeter_key, { prefix: "Hello" })
+    ctx.provide(greeter_key, { prefix: "Hello", })
     ctx.use_(greeter_module())
   })
 }

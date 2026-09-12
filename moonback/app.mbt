@@ -46,7 +46,7 @@ async fn AppInst::dispatch_request(
 ) -> Unit {
   let handler = match self.router.route(req.meth, req.path) {
     None => default_handler
-    Some({ handler, params }) => (req, res) => handler({ ..req, params, }, res)
+    Some({ handler, params, }) => (req, res) => handler({ ..req, params, }, res)
   }
   Middleware::chain(self.middlewares)(handler)(req, res)
 }
@@ -57,7 +57,7 @@ async fn AppInst::handle_request(
   req : Request,
   res : Responder,
 ) -> Unit {
-  let committed : Ref[Bool] = { val: false }
+  let committed : Ref[Bool] = { val: false, }
   let res = res.track_committed(committed)
   self.dispatch_request(req, res) catch {
     ClientDisconnected => ()

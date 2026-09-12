@@ -57,7 +57,7 @@ struct HtmlBuilder {
 /// }
 /// ```
 pub fn Html::raw(raw : String) -> Html {
-  { f: k => k(@utf8.encode(raw)) }
+  { f: k => k(@utf8.encode(raw)), }
 }
 
 ///|
@@ -79,7 +79,7 @@ pub fn Html::escape(str : String) -> Html {
 /// The bytes are written unchanged. The caller is responsible for ensuring that
 /// they contain valid UTF-8 and trusted markup.
 pub fn Html::raw_utf8_chunk(chunk : Bytes) -> Html {
-  { f: k => k(chunk) }
+  { f: k => k(chunk), }
 }
 
 ///|
@@ -103,7 +103,7 @@ pub fn Html::raw_utf8_chunk(chunk : Bytes) -> Html {
 /// }
 /// ```
 pub fn Html::Html(f : async (HtmlBuilder) -> Unit) -> Html {
-  { f: k => f({ k, }) }
+  { f: k => f({ k, }), }
 }
 
 ///|
