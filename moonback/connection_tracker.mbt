@@ -52,7 +52,7 @@ fn TrackedServerConnection::on_close(
   } else {
     let id = self.next_close_handler_id
     self.next_close_handler_id += 1
-    self.close_handlers.push({ id, handler: f })
+    self.close_handlers.push({ id, handler: f, })
     () => {
       guard self.close_handlers.search_by(h => h.id == id) is Some(idx) else {
         return

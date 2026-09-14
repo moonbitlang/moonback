@@ -11,7 +11,7 @@ struct TypedKey[T] {
 }
 
 ///|
-let _typed_key_next : Ref[Int] = { val: 0 }
+let _typed_key_next : Ref[Int] = { val: 0, }
 
 ///|
 /// Creates a fresh typed key with custom boxing and unboxing logic.
@@ -22,7 +22,7 @@ pub fn[T] TypedKey::TypedKey(
 ) -> TypedKey[T] {
   let val = _typed_key_next.val
   _typed_key_next.val += 1
-  { val, name, box, unbox }
+  { val, name, box, unbox, }
 }
 
 ///|

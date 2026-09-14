@@ -172,7 +172,7 @@ fn[T] Trie::search(self : Trie[T], path : StringView) -> MatchResult[T]? {
   match self.search_recursive(segments, params) {
     Some(node) =>
       match node.payload {
-        Some(payload) => Some({ payload, params })
+        Some(payload) => Some({ payload, params, })
         None => None
       }
     None => None

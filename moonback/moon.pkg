@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/core/test",
   "moonbitlang/core/string",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/immut/sorted_map" @immut/sorted_map,
@@ -10,3 +9,7 @@ import {
   "moonbitlang/async/os_error",
   "moonbitlang/async/socket",
 }
+
+import {
+  "moonbitlang/core/test",
+} for "wbtest"

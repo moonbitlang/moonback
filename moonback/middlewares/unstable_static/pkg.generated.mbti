@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn from_assets(Map[String, Bytes], rewrite_trailing_slash_index? : Bool, history_fallback? : String?) -> @moonback.Middleware
+
 pub fn new(root~ : String, rewrite_trailing_slash_index? : Bool, history_fallback? : String?) -> @moonback.Middleware
 
 // Errors

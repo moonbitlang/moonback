@@ -1,5 +1,5 @@
 ///|
-let _headers_next_owner_id : Ref[Int] = { val: 0 }
+let _headers_next_owner_id : Ref[Int] = { val: 0, }
 
 ///|
 const HEADERS_SHARED_OWNER_ID : Int = -1
@@ -114,7 +114,7 @@ struct Headers {
 
 ///|
 let default_headers : Headers = {
-  store: { owner_id: HEADERS_SHARED_OWNER_ID, headers: {}, set_cookie: [] },
+  store: { owner_id: HEADERS_SHARED_OWNER_ID, headers: {}, set_cookie: [], },
 }
 
 ///|
@@ -138,7 +138,7 @@ pub fn Headers::from(from : &ToHeaders) -> Headers {
 
 ///|
 fn Headers::from_request(headers : @http.Headers) -> Headers {
-  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie: [] }
+  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie: [], }
   { store, }
 }
 
@@ -146,7 +146,7 @@ fn Headers::from_request(headers : @http.Headers) -> Headers {
 pub fn Headers::to_mut(self : Headers) -> MutHeaders {
   let owner_id = _headers_next_owner_id.val
   _headers_next_owner_id.val += 1
-  { owner_id, store: self.store }
+  { owner_id, store: self.store, }
 }
 
 ///|
@@ -197,7 +197,7 @@ struct MutHeaders {
 pub fn MutHeaders::MutHeaders() -> MutHeaders {
   let owner_id = _headers_next_owner_id.val
   _headers_next_owner_id.val += 1
-  { owner_id, store: { owner_id, headers: {}, set_cookie: [] } }
+  { owner_id, store: { owner_id, headers: {}, set_cookie: [], }, }
 }
 
 ///|
@@ -277,7 +277,7 @@ pub fn MutHeaders::remove(self : MutHeaders, name : String) -> Unit {
 ///|
 pub fn MutHeaders::to_immut(self : MutHeaders) -> Headers {
   self.store.owner_id = HEADERS_SHARED_OWNER_ID
-  { store: self.store }
+  { store: self.store, }
 }
 
 ///|
@@ -308,7 +308,7 @@ pub impl ToHeaders for Map[String, String] with fn to_headers(self) -> Headers {
     }
     headers[k] = v
   }
-  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie }
+  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie, }
   { store, }
 }
 
@@ -328,6 +328,6 @@ pub impl ToHeaders for Array[(String, String)] with fn to_headers(self) -> Heade
       Some(old) => headers[k] = old + ", " + v
     }
   }
-  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie }
+  let store = { owner_id: HEADERS_SHARED_OWNER_ID, headers, set_cookie, }
   { store, }
 }

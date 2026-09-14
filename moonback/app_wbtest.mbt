@@ -50,7 +50,7 @@ impl WriteFlusher for NoopWriteFlusher
 ///|
 async fn run_with_fake_responder(app : App) -> Array[Int] {
   let statuses = []
-  let writer = NoopWriteFlusher::{  }
+  let writer = NoopWriteFlusher::{ }
   @async.with_task_group(group => {
     let req : Request = {
       ctx: Context::new(app, Mock),
@@ -59,7 +59,7 @@ async fn run_with_fake_responder(app : App) -> Array[Int] {
       search: None,
       headers: Headers::default(),
       params: {},
-      body: { group, state: Unbuffered },
+      body: { group, state: Unbuffered, },
     }
     app.handle_request(
       req,
@@ -135,7 +135,7 @@ async test "handler reader error is not treated as tracked disconnect" {
   with_tracked_server_connection(conn => {
     conn.notify_client_disconnected()
     @async.with_task_group(group => {
-      let raw_req : @http.Request = { meth: Get, path: "/", headers: {} }
+      let raw_req : @http.Request = { meth: Get, path: "/", headers: {}, }
       let req : Request = {
         ctx: Context::new(
           app,
@@ -146,9 +146,9 @@ async test "handler reader error is not treated as tracked disconnect" {
         search: None,
         headers: Headers::default(),
         params: {},
-        body: { group, state: Unbuffered },
+        body: { group, state: Unbuffered, },
       }
-      let writer = NoopWriteFlusher::{  }
+      let writer = NoopWriteFlusher::{ }
       try
         app.handle_request(req, Responder((_status, _headers) => writer))
       catch {

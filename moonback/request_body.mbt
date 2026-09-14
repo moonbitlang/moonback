@@ -17,7 +17,7 @@ fn RequestBody::from_ready_stream(
   reader : &@io.Reader,
   group~ : @async.TaskGroup[Unit],
 ) -> RequestBody {
-  { group, state: ReadyStream(reader) }
+  { group, state: ReadyStream(reader), }
 }
 
 ///|

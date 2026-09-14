@@ -10,6 +10,7 @@ priv enum ServedPath {
   Missing
   Forbidden
   Found(String)
+  Content(String, Bytes)
 }
 
 ///|
@@ -42,7 +43,9 @@ fn has_trailing_slash(path : String) -> Bool {
 
 ///|
 fn normalize_relative_path(path : String) -> String? {
-  guard path.has_prefix("/") else { return None }
+  guard path.has_prefix("/") && !path.contains("\\") && !path.contains("\u{0}") else {
+    return None
+  }
   let segments = []
   for segment in path.split("/").collect() {
     match segment {
@@ -77,6 +80,12 @@ fn guess_content_type(path : String) -> String {
     [.., .. ".jpg"] | [.., .. ".jpeg"] => "image/jpeg"
     [.., .. ".gif"] => "image/gif"
     [.., .. ".ico"] => "image/x-icon"
+    [.., .. ".webp"] => "image/webp"
+    [.., .. ".avif"] => "image/avif"
+    [.., .. ".woff"] => "font/woff"
+    [.., .. ".woff2"] => "font/woff2"
+    [.., .. ".ttf"] => "font/ttf"
+    [.., .. ".otf"] => "font/otf"
     [.., .. ".wasm"] => "application/wasm"
     [.., .. ".pdf"] => "application/pdf"
     _ => "application/octet-stream"
@@ -181,6 +190,19 @@ pub fn new(
   rewrite_trailing_slash_index? : Bool = false,
   history_fallback? : String? = None,
 ) -> @moonback.Middleware {
+  static_middleware(
+    Directory(root),
+    rewrite_trailing_slash_index~,
+    history_fallback~,
+  )
+}
+
+///|
+fn static_middleware(
+  source : StaticSource,
+  rewrite_trailing_slash_index~ : Bool,
+  history_fallback~ : String?,
+) -> @moonback.Middleware {
   Middleware(next => {
     (req, res) => {
       guard req.meth is Get || req.meth is Head else {
@@ -188,21 +210,26 @@ pub fn new(
         return
       }
 
-      let request_path = strip_query_and_fragment(req.path)
+      guard decode_request_path(strip_query_and_fragment(req.path))
+        is Some(request_path) else {
+        res.send_void(status=404)
+        return
+      }
       let trailing_slash = has_trailing_slash(request_path)
       guard normalize_relative_path(request_path) is Some(relative_path) else {
         res.send_void(status=404)
         return
       }
       match
-        resolve_served_file(
-          root,
+        resolve_static_resource(
+          source,
           relative_path,
           trailing_slash~,
           rewrite_trailing_slash_index~,
         ) {
         Forbidden => res.send_void(status=403)
         Found(file_path) => send_file(req, res, file_path, on_missing=next)
+        Content(path, content) => send_content(req, res, path, content)
         Missing =>
           if history_fallback is Some(fallback) &&
             is_history_fallback_candidate(relative_path) {
@@ -213,8 +240,8 @@ pub fn new(
             next(req, history_fallback_responder(res)) catch {
               HistoryFallback =>
                 match
-                  resolve_served_file(
-                    root,
+                  resolve_static_resource(
+                    source,
                     fallback_path,
                     trailing_slash=false,
                     rewrite_trailing_slash_index=false,
@@ -222,6 +249,8 @@ pub fn new(
                   Missing => next(req, res)
                   Forbidden => res.send_void(status=403)
                   Found(file_path) => send_file(req, res, file_path)
+                  Content(path, content) =>
+                    send_content(req, res, path, content)
                 }
               err => raise err
             }

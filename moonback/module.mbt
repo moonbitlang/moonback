@@ -115,7 +115,7 @@ pub fn ModuleContext::mount(
   let path = mount_path(path)
   self.inst.router.add_fallback_route(path, (req, res) => {
     app.handle_mounted_request(
-      { ..req, path: "/", params: {} },
+      { ..req, path: "/", params: {}, },
       res,
       error_mode,
     )
@@ -123,7 +123,7 @@ pub fn ModuleContext::mount(
   let prefix = if path == "/" { "/" } else { path + "/" }
   self.inst.router.add_fallback_route(prefix + "*path", (req, res) => {
     let path = mounted_request_path(req.params["path"])
-    app.handle_mounted_request({ ..req, path, params: {} }, res, error_mode)
+    app.handle_mounted_request({ ..req, path, params: {}, }, res, error_mode)
   })
 }
 

@@ -15,7 +15,7 @@ struct CustomConfigEntry {
 
 ///|
 pub fn[T] Config::custom(key : TypedKey[T], value : T) -> CustomConfigEntry {
-  { key: key.val, value: (key.box)(value) }
+  { key: key.val, value: (key.box)(value), }
 }
 
 ///|
