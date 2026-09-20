@@ -18,7 +18,7 @@ Add MoonBack to your `moon.mod`:
 
 ```moonbit
 import {
-  "moonbitlang/async@0.21.0",
+  "moonbitlang/async@0.22.0",
   "moonbitlang/moonback@0.8.2",
 }
 

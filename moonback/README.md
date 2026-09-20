@@ -25,7 +25,7 @@ Add MoonBack to your `moon.mod`:
 
 ```moonbit
 import {
-  "moonbitlang/async@0.21.0",
+  "moonbitlang/async@0.22.0",
   "moonbitlang/moonback@0.8.2",
 }
 ```
@@ -445,6 +445,31 @@ defer app.close()
 ```
 
 Close hooks run in reverse registration order.
+
+## Cancellation
+
+MoonBack uses `moonbitlang/async` 0.22.0. Cancellation is no longer an ordinary
+error: it bypasses `catch` blocks and still runs `defer` and `errdefer`. Put
+resource cleanup in those blocks instead of catch-all error handlers. Async
+cleanup that must complete after cancellation needs `@async.protect_from_cancel`,
+ideally with a bounded timeout.
+
+Cancelling `app.serve(listener)` stops accepting connections and closes the
+listener unless `take_ownership=false`. In-flight requests, including WebSocket
+handlers, can finish within `Config.stop_timeout`; any remaining handlers are
+cancelled when that grace period expires. Serving exits early when all
+connections finish, and the original cancellation propagates to the caller.
+
+Use `@async.handle_cancellation` only when you intentionally need to observe or
+handle cancellation. A `None` result means cancellation occurred; the task
+remains cancelled, so further unprotected async operations are still cancellable.
+Do not use `@async.is_cancellation_error`, which is deprecated.
+
+Waiting for a separately cancelled task is different: `task.wait()` raises the
+ordinary error `@async.TaskCancelled`. Catch that error when waiting for a task
+you deliberately cancelled. Unhandled ordinary errors from request handlers
+still receive MoonBack's normal error handling, rather than being treated as
+cancellation of the request itself.
 
 ## Mounting apps
 

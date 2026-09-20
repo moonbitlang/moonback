@@ -244,7 +244,7 @@ async test "serve stops reusing connection after handler makes connection unusab
     assert_true(!second_handled)
     serve_task.cancel()
     serve_task.wait() catch {
-      err if @async.is_cancellation_error(err) => ()
+      @async.TaskCancelled => ()
       err => raise err
     }
   })
@@ -326,7 +326,7 @@ async test "serve cancels idle keep-alive connections" {
       () => serve_task.wait(),
       error=IdleKeepAliveCancelTimeout,
     ) catch {
-      err if @async.is_cancellation_error(err) => ()
+      @async.TaskCancelled => ()
       err => raise err
     }
   })
@@ -339,14 +339,11 @@ async test "serve cancels handler when content-length body is truncated" {
   let app = App(
     Module(ctx => {
       ctx.post("/upload", (req, _res) => {
-        ignore(req.body.text() catch { _ => "" })
-        @async.sleep(5000) catch {
-          err if @async.is_cancellation_error(err) => {
-            cancelled = true
-            raise err
-          }
-          err => raise err
+        defer {
+          cancelled = @async.is_being_cancelled()
         }
+        ignore(req.body.text() catch { _ => "" })
+        @async.sleep(5000)
       })
     }),
   )
@@ -373,7 +370,7 @@ async test "serve cancels handler when content-length body is truncated" {
     )
     serve_task.cancel()
     serve_task.wait() catch {
-      err if @async.is_cancellation_error(err) => ()
+      @async.TaskCancelled => ()
       err => raise err
     }
   })
@@ -385,8 +382,10 @@ async test "serve skips end_response after connection closes before response sta
   let app = App(
     Module(ctx => {
       ctx.post("/upload", (req, _res) => {
+        defer {
+          handled = true
+        }
         ignore(req.body.text() catch { _ => "" })
-        handled = true
       })
     }),
   )
@@ -413,7 +412,7 @@ async test "serve skips end_response after connection closes before response sta
     )
     serve_task.cancel()
     serve_task.wait() catch {
-      err if @async.is_cancellation_error(err) => ()
+      @async.TaskCancelled => ()
       err => raise err
     }
   })
@@ -425,14 +424,11 @@ async test "serve cancels handler when chunked request body disconnects" {
   let app = App(
     Module(ctx => {
       ctx.post("/upload", (req, _res) => {
-        ignore(req.body.text() catch { _ => "" })
-        @async.sleep(5000) catch {
-          err if @async.is_cancellation_error(err) => {
-            cancelled = true
-            raise err
-          }
-          err => raise err
+        defer {
+          cancelled = @async.is_being_cancelled()
         }
+        ignore(req.body.text() catch { _ => "" })
+        @async.sleep(5000)
       })
     }),
   )
@@ -459,7 +455,7 @@ async test "serve cancels handler when chunked request body disconnects" {
     )
     serve_task.cancel()
     serve_task.wait() catch {
-      err if @async.is_cancellation_error(err) => ()
+      @async.TaskCancelled => ()
       err => raise err
     }
   })
@@ -504,7 +500,7 @@ async test "serve does not treat complete body eof as disconnect" {
     }
     serve_task.cancel()
     serve_task.wait() catch {
-      err if @async.is_cancellation_error(err) => ()
+      @async.TaskCancelled => ()
       err => raise err
     }
   })
@@ -549,7 +545,7 @@ async test "serve does not treat empty request body as disconnect" {
     }
     serve_task.cancel()
     serve_task.wait() catch {
-      err if @async.is_cancellation_error(err) => ()
+      @async.TaskCancelled => ()
       err => raise err
     }
   })

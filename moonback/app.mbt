@@ -61,7 +61,6 @@ async fn AppInst::handle_request(
   let res = res.track_committed(committed)
   self.dispatch_request(req, res) catch {
     ClientDisconnected => ()
-    err if @async.is_cancellation_error(err) => ()
     err if req.ctx.connection_unusable() => raise err
     _ => {
       // TODO: log the error
@@ -138,8 +137,7 @@ async fn App::serve_on_connection(
         defer unsubscribe()
         task.wait() catch {
           ClientDisconnected => ()
-          err if @async.is_cancellation_error(err) &&
-            tracked_conn.is_client_disconnected() => ()
+          @async.TaskCancelled if tracked_conn.is_client_disconnected() => ()
           err => raise err
         }
         if req.ctx.conn_info is Upgraded(_, _) || tracked_conn.is_unusable() {
@@ -154,10 +152,10 @@ async fn App::serve_on_connection(
 
 ///|
 /// Starts accepting connections from `listener` and serves requests on them.
-/// This returns when serving stops or when the surrounding task is cancelled.
+/// Cancellation propagates after in-flight connections have been shut down.
 ///
 /// If `take_ownership` is true (`true` by default), `listener.close()` is
-/// called / before returning.
+/// called before waiting for in-flight connections to finish.
 ///
 /// On cancellation, in-flight connections are given up to
 /// `Config.stop_timeout` seconds to finish gracefully.
@@ -167,31 +165,44 @@ pub async fn App::serve(
   take_ownership? : Bool = true,
 ) -> Unit {
   let no_protect = @async.CondVar::Cond()
+  let connection_finished = @async.CondVar::Cond()
+  let mut active_connections = 0
   @async.with_task_group(group => {
     errdefer {
       if take_ownership {
         listener.close()
       }
+      defer no_protect.broadcast()
       if @async.is_being_cancelled() &&
         self.inst.config.stop_timeout is timeout &&
         timeout > 0 {
-        group.spawn_bg(() => {
-          @async.sleep((timeout * 1000).to_int())
-          no_protect.broadcast()
+        // The serving group is already cancelled, including any new child tasks.
+        @async.protect_from_cancel(() => {
+          ignore(
+            @async.with_timeout_opt((timeout * 1000).to_int(), () => {
+              while active_connections > 0 {
+                connection_finished.wait()
+              }
+            }),
+          )
         })
-      } else {
-        no_protect.broadcast()
       }
     }
     if self.inst.config.max_connections is Some(limit) {
       let limit = @async.Semaphore(limit)
       for ;; {
         let (conn, peer_addr) = listener.accept()
-        limit.acquire()
+        {
+          errdefer conn.close()
+          limit.acquire()
+        }
+        active_connections += 1
         group.spawn_bg(allow_failure=true, () => {
           defer {
             conn.close()
             limit.release()
+            active_connections -= 1
+            connection_finished.broadcast()
           }
           self.serve_on_connection(conn, peer_addr, no_protect~)
         })
@@ -199,8 +210,13 @@ pub async fn App::serve(
     } else {
       for ;; {
         let (conn, peer_addr) = listener.accept()
+        active_connections += 1
         group.spawn_bg(allow_failure=true, () => {
-          defer conn.close()
+          defer {
+            conn.close()
+            active_connections -= 1
+            connection_finished.broadcast()
+          }
           self.serve_on_connection(conn, peer_addr, no_protect~)
         })
       }
