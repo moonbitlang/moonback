@@ -18,7 +18,7 @@ async fn send_request(
   let captured = { log: StringBuilder(), }
   let app = @moonback.App(
     Module(ctx => {
-      ctx.add_middleware(new(captured))
+      ctx.add_middleware(@unstable_logreq.new(captured))
       ctx.add_route(meth, path, (_req, res) => res.send_void(status~))
     }),
   )

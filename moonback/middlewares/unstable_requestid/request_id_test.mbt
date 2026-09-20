@@ -9,7 +9,7 @@ async fn run_handler(
     Module(ctx => {
       ctx.add_middleware(middleware)
       ctx.get("/", (req, res) => {
-        seen_request_id = get(req)
+        seen_request_id = @unstable_requestid.get(req)
         res.send_void(status=204)
       })
     }),
@@ -31,7 +31,9 @@ async fn run_handler(
 
 ///|
 async test "request id middleware generates id and sets response header" {
-  let (request_id, header) = run_handler(new(generator=() => "generated-id"))
+  let (request_id, header) = run_handler(
+    @unstable_requestid.new(generator=() => "generated-id"),
+  )
   debug_inspect(request_id, content="Some(\"generated-id\")")
   debug_inspect(header, content="Some(\"generated-id\")")
 }
@@ -39,7 +41,7 @@ async test "request id middleware generates id and sets response header" {
 ///|
 async test "request id middleware trusts proxy header when enabled" {
   let (request_id, header) = run_handler(
-    new(generator=() => "generated-id"),
+    @unstable_requestid.new(generator=() => "generated-id"),
     config=Config(trust_proxy=true),
     request_headers={ "X-Request-ID": "proxy-id" },
   )
@@ -50,7 +52,7 @@ async test "request id middleware trusts proxy header when enabled" {
 ///|
 async test "request id middleware skips response header when disabled" {
   let (request_id, header) = run_handler(
-    new(generator=() => "generated-id", header=None),
+    @unstable_requestid.new(generator=() => "generated-id", header=None),
   )
   debug_inspect(request_id, content="Some(\"generated-id\")")
   debug_inspect(header, content="None")

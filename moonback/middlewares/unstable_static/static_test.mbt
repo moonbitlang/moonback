@@ -28,7 +28,7 @@ async fn send_request(
 ///|
 async test "static middleware serves existing file" {
   let (code, content_type, body) = send_request(
-    new(root=fixture_root),
+    @unstable_static.new(root=fixture_root),
     "/app.js",
   )
   debug_inspect(code, content="200")
@@ -47,7 +47,7 @@ async test "static middleware serves existing file" {
 ///|
 async test "static middleware rewrites trailing slash to index" {
   let (code, _content_type, body) = send_request(
-    new(root=fixture_root, rewrite_trailing_slash_index=true),
+    @unstable_static.new(root=fixture_root, rewrite_trailing_slash_index=true),
     "/docs/",
   )
   debug_inspect(code, content="200")
@@ -62,7 +62,7 @@ async test "static middleware rewrites trailing slash to index" {
 ///|
 async test "static middleware falls through when trailing slash rewrite disabled" {
   let (code, _content_type, body) = send_request(
-    new(root=fixture_root, rewrite_trailing_slash_index=false),
+    @unstable_static.new(root=fixture_root, rewrite_trailing_slash_index=false),
     "/docs/",
   )
   debug_inspect(code, content="404")
@@ -77,7 +77,10 @@ async test "static middleware falls through when trailing slash rewrite disabled
 ///|
 async test "static middleware serves history fallback for route path" {
   let (code, _content_type, body) = send_request(
-    new(root=fixture_root, history_fallback=Some("/index.html")),
+    @unstable_static.new(
+      root=fixture_root,
+      history_fallback=Some("/index.html"),
+    ),
     "/dashboard",
   )
   debug_inspect(code, content="200")
@@ -92,7 +95,7 @@ async test "static middleware serves history fallback for route path" {
 ///|
 async test "static middleware keeps next response when next is not 404" {
   let (code, _content_type, body) = send_request(
-    new(root=fixture_root, history_fallback=Some("index.html")),
+    @unstable_static.new(root=fixture_root, history_fallback=Some("index.html")),
     "/dashboard",
     extra_routes=Module(ctx => {
       ctx.get("/dashboard", (_req, res) => {
@@ -113,7 +116,10 @@ async test "static middleware keeps next response when next is not 404" {
 ///|
 async test "static middleware uses history fallback when next returns 404" {
   let (code, _content_type, body) = send_request(
-    new(root=fixture_root, history_fallback=Some("/index.html")),
+    @unstable_static.new(
+      root=fixture_root,
+      history_fallback=Some("/index.html"),
+    ),
     "/dashboard",
     extra_routes=Module(ctx => {
       ctx.get("/dashboard", (_req, res) => {
@@ -134,7 +140,7 @@ async test "static middleware uses history fallback when next returns 404" {
 ///|
 async test "static middleware does not use history fallback for asset-like path" {
   let (code, _content_type, body) = send_request(
-    new(root=fixture_root, history_fallback=Some("index.html")),
+    @unstable_static.new(root=fixture_root, history_fallback=Some("index.html")),
     "/missing.js",
   )
   debug_inspect(code, content="404")

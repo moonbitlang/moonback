@@ -1,5 +1,5 @@
 ///|
-pub extenum TypedBox {}
+pub extenum TypedBox
 
 ///|
 /// A typed key used to store and retrieve custom values from typed stores.
