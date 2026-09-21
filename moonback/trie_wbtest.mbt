@@ -357,13 +357,12 @@ test "static route - unicode and colliding first code units" {
   let trie : Trie[Int] = Trie::root()
   trie.insert("/a/item", 1)
   trie.insert("/á/item", 2)
-  trie.insert("/日本語/😀", 3)
-  for
-    (path, payload) in [("/a/item", 1), ("/á/item", 2), ("/日本語/😀", 3)] {
+  trie.insert("/中文/😀", 3)
+  for (path, payload) in [("/a/item", 1), ("/á/item", 2), ("/中文/😀", 3)] {
     guard trie.search(path) is Some(result) else { fail("expected match") }
     assert_eq(result.payload, payload)
   }
-  assert_true(trie.search("/日本語/不存在") is None)
+  assert_true(trie.search("/中文/不存在") is None)
 }
 
 ///|
@@ -384,7 +383,7 @@ test "catch all preserves normalized segments after backtracking" {
 test "catch all handles long paths and independent parameter maps" {
   let trie : Trie[Int] = Trie::root()
   trie.insert("/files/*rest", 1)
-  let rest = Array::make(128, "日本語😀").join("/")
+  let rest = Array::make(128, "中文😀").join("/")
   guard trie.search("/files/" + rest) is Some(first) else {
     fail("expected match")
   }
@@ -406,14 +405,14 @@ test "catch all normalizes every separator combination" {
           let path = leading +
             "files" +
             first +
-            "日本語" +
+            "中文" +
             second +
             "😀" +
             trailing
           guard trie.search(path) is Some(result) else {
             fail("expected match")
           }
-          assert_eq(result.params.get("rest"), Some("日本語/😀"))
+          assert_eq(result.params.get("rest"), Some("中文/😀"))
         }
       }
     }
