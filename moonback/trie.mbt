@@ -1,10 +1,10 @@
 ///|
 /// Trie node for path-based routing
-/// Uses SparseArray128 indexed by first character for O(1) lookup
+/// Uses 128 buckets indexed by the low bits of the first UTF-16 code unit.
 /// T is the payload type stored at leaf nodes
 priv struct Trie[T] {
   segment : StringView // Path segment (actual path for static nodes, param name for param nodes)
-  children : FixedArray[Array[Trie[T]]?] // Child nodes indexed by first character
+  children : FixedArray[Array[Trie[T]]?] // Static children; collisions use full segment equality
   mut param_child : Trie[T]? // Parameter child node :id
   mut catch_all_child : Trie[T]? // Catch-all child node *rest
   mut payload : T?
@@ -37,8 +37,8 @@ fn[T] Trie::find_or_create_static_child(
     abort("segment cannot be empty")
   }
 
-  // Use first character as index
-  let first_char = segment.code_unit_at(0).to_int()
+  // Keep Unicode code units within the bucket table.
+  let first_char = segment.code_unit_at(0).to_int() & 127
 
   // Find existing static child node
   match self.children[first_char] {
@@ -167,9 +167,8 @@ priv struct MatchResult[T] {
 /// Search for a path in the trie
 /// Returns the payload and extracted parameters if found
 fn[T] Trie::search(self : Trie[T], path : StringView) -> MatchResult[T]? {
-  let segments = parse_path(path)
   let params : Map[StringView, StringView] = Map([])
-  match self.search_recursive(segments, params) {
+  match self.search_recursive(path, 0, params) {
     Some(node) =>
       match node.payload {
         Some(payload) => Some({ payload, params, })
@@ -184,27 +183,38 @@ fn[T] Trie::search(self : Trie[T], path : StringView) -> MatchResult[T]? {
 /// Returns the matched node if found
 fn[T] Trie::search_recursive(
   self : Trie[T],
-  segments : ArrayView[StringView],
+  path : StringView,
+  offset : Int,
   params : Map[StringView, StringView],
 ) -> Trie[T]? {
-  if segments.length() == 0 {
+  // Scan only the current segment. Repeated and trailing slashes are ignored,
+  // just as in parse_path, without allocating a segment array per request.
+  let len = path.length()
+  let mut start = offset
+  while start < len && path.code_unit_at(start) == 47 {
+    start += 1
+  }
+  if start == len {
     // Reached end of path
     if self.payload is Some(_) {
       return Some(self)
     }
     return None
   }
-  let segment = segments[0]
-  let remaining = segments[1:]
+  let mut end = start
+  while end < len && path.code_unit_at(end) != 47 {
+    end += 1
+  }
+  let segment = path[start:end]
 
   // 1. Try static match first (highest priority)
   if segment.length() > 0 {
-    let first_char = segment.code_unit_at(0).to_int()
+    let first_char = segment.code_unit_at(0).to_int() & 127
     match self.children[first_char] {
       Some(nodes) =>
         for node in nodes {
           if node.segment == segment {
-            match node.search_recursive(remaining, params) {
+            match node.search_recursive(path, end, params) {
               Some(result) => return Some(result)
               None => ()
             }
@@ -220,7 +230,7 @@ fn[T] Trie::search_recursive(
       // Save parameter value
       let old_value = params.get(child.segment)
       params.set(child.segment, segment)
-      match child.search_recursive(remaining, params) {
+      match child.search_recursive(path, end, params) {
         Some(result) => return Some(result)
         None =>
           // Backtrack: restore parameter
@@ -237,10 +247,7 @@ fn[T] Trie::search_recursive(
   match self.catch_all_child {
     Some(child) => {
       // Catch-all captures all remaining path segments
-      let rest_path = segments
-        .iter()
-        .intersperse("/")
-        .fold(init="", fn(acc, s) { acc + s.to_owned() })
+      let rest_path = normalize_catch_all(path[start:])
       params.set(child.segment, rest_path)
       if child.payload is Some(_) {
         return Some(child)
@@ -249,4 +256,38 @@ fn[T] Trie::search_recursive(
     None => ()
   }
   None
+}
+
+///|
+/// Most paths can be captured as a view. Only repeated separators require a
+/// copy; a builder keeps normalization linear even for long catch-all paths.
+fn normalize_catch_all(path : StringView) -> StringView {
+  let mut end = path.length()
+  while end > 0 && path.code_unit_at(end - 1) == 47 {
+    end -= 1
+  }
+  let path = path[:end]
+  if !path.contains("//") {
+    return path
+  }
+  let builder = StringBuilder(size_hint=end)
+  let mut start = 0
+  for i in 0..<end {
+    if path.code_unit_at(i) == 47 {
+      if i > start {
+        if !builder.is_empty() {
+          builder.write_string("/")
+        }
+        builder.write_view(path[start:i])
+      }
+      start = i + 1
+    }
+  }
+  if start < end {
+    if !builder.is_empty() {
+      builder.write_string("/")
+    }
+    builder.write_view(path[start:])
+  }
+  builder.to_string()[:]
 }
