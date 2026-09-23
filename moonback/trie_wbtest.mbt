@@ -351,3 +351,70 @@ test "complex - realistic api routes" {
   @test.assert_eq(r4.params.get("id"), Some("42"))
   @test.assert_eq(r4.params.get("postId"), Some("7"))
 }
+
+///|
+test "static route - unicode and colliding first code units" {
+  let trie : Trie[Int] = Trie::root()
+  trie.insert("/a/item", 1)
+  trie.insert("/á/item", 2)
+  trie.insert("/中文/😀", 3)
+  for (path, payload) in [("/a/item", 1), ("/á/item", 2), ("/中文/😀", 3)] {
+    guard trie.search(path) is Some(result) else { fail("expected match") }
+    assert_eq(result.payload, payload)
+  }
+  assert_true(trie.search("/中文/不存在") is None)
+}
+
+///|
+test "catch all preserves normalized segments after backtracking" {
+  let trie : Trie[Int] = Trie::root()
+  trie.insert("/files/:id/end", 1)
+  trie.insert("/files/*rest", 2)
+  for path in ["/files/a/b/", "//files///a//b///", "files/a/b"] {
+    guard trie.search(path) is Some(result) else { fail("expected match") }
+    assert_eq(result.payload, 2)
+    assert_eq(result.params.get("rest"), Some("a/b"))
+    assert_eq(result.params.get("id"), None)
+  }
+  assert_true(trie.search("/files///") is None)
+}
+
+///|
+test "catch all handles long paths and independent parameter maps" {
+  let trie : Trie[Int] = Trie::root()
+  trie.insert("/files/*rest", 1)
+  let rest = Array::make(128, "中文😀").join("/")
+  guard trie.search("/files/" + rest) is Some(first) else {
+    fail("expected match")
+  }
+  guard trie.search("/files/other") is Some(second) else {
+    fail("expected match")
+  }
+  assert_eq(first.params.get("rest"), Some(rest[:]))
+  assert_eq(second.params.get("rest"), Some("other"))
+}
+
+///|
+test "catch all normalizes every separator combination" {
+  let trie : Trie[Int] = Trie::root()
+  trie.insert("/files/*rest", 1)
+  for leading in ["/", "//"] {
+    for first in ["/", "//", "///"] {
+      for second in ["/", "//", "///"] {
+        for trailing in ["", "/", "///"] {
+          let path = leading +
+            "files" +
+            first +
+            "中文" +
+            second +
+            "😀" +
+            trailing
+          guard trie.search(path) is Some(result) else {
+            fail("expected match")
+          }
+          assert_eq(result.params.get("rest"), Some("中文/😀"))
+        }
+      }
+    }
+  }
+}
