@@ -159,7 +159,7 @@ async fn TrackedServerConnection::flush(self : TrackedServerConnection) -> Unit 
 
 ///|
 impl @io.Reader for TrackedServerConnection with fn _get_internal_buffer(self) {
-  self.conn._get_internal_buffer()
+  @io.Reader::_get_internal_buffer(self.conn)
 }
 
 ///|
@@ -170,7 +170,7 @@ impl @io.Reader for TrackedServerConnection with fn _direct_read(
   max_len~,
 ) {
   errdefer self.notify_unusable()
-  self.conn._direct_read(buf, offset~, max_len~) catch {
+  @io.Reader::_direct_read(self.conn, buf, offset~, max_len~) catch {
     @io.ReaderClosed | @os_error.OSError(_) => {
       self.notify_client_disconnected()
       raise ClientDisconnected
