@@ -1,7 +1,7 @@
 name = "graceful_shutdown"
 
 import {
-  "moonbitlang/async@0.22.2",
+  "moonbitlang/async@0.22.4",
   "moonbitlang/moonback@0.8.5",
 }
 

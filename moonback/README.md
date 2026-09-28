@@ -466,7 +466,7 @@ remains cancelled, so further unprotected async operations are still cancellable
 Do not use `@async.is_cancellation_error`, which is deprecated.
 
 Waiting for a separately cancelled task is different: `task.wait()` raises the
-ordinary error `@async.TaskCancelled`. Catch that error when waiting for a task
+ordinary error `@async.WaitedTaskAlreadyCancelled`. Catch that error when waiting for a task
 you deliberately cancelled. Unhandled ordinary errors from request handlers
 still receive MoonBack's normal error handling, rather than being treated as
 cancellation of the request itself.

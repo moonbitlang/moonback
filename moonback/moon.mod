@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "https://github.com/moonbitlang/moonback"
 
 import {
-  "moonbitlang/async@0.22.2",
+  "moonbitlang/async@0.22.4",
 }
 
 license = "Apache-2.0"
