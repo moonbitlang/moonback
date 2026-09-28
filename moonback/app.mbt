@@ -137,7 +137,8 @@ async fn App::serve_on_connection(
         defer unsubscribe()
         task.wait() catch {
           ClientDisconnected => ()
-          @async.TaskCancelled if tracked_conn.is_client_disconnected() => ()
+          @async.WaitedTaskAlreadyCancelled if tracked_conn.is_client_disconnected() =>
+            ()
           err => raise err
         }
         if req.ctx.conn_info is Upgraded(_, _) || tracked_conn.is_unusable() {

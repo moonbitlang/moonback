@@ -244,7 +244,7 @@ async test "serve stops reusing connection after handler makes connection unusab
     assert_true(!second_handled)
     serve_task.cancel()
     serve_task.wait() catch {
-      @async.TaskCancelled => ()
+      @async.WaitedTaskAlreadyCancelled => ()
       err => raise err
     }
   })
@@ -326,7 +326,7 @@ async test "serve cancels idle keep-alive connections" {
       () => serve_task.wait(),
       error=IdleKeepAliveCancelTimeout,
     ) catch {
-      @async.TaskCancelled => ()
+      @async.WaitedTaskAlreadyCancelled => ()
       err => raise err
     }
   })
@@ -370,7 +370,7 @@ async test "serve cancels handler when content-length body is truncated" {
     )
     serve_task.cancel()
     serve_task.wait() catch {
-      @async.TaskCancelled => ()
+      @async.WaitedTaskAlreadyCancelled => ()
       err => raise err
     }
   })
@@ -412,7 +412,7 @@ async test "serve skips end_response after connection closes before response sta
     )
     serve_task.cancel()
     serve_task.wait() catch {
-      @async.TaskCancelled => ()
+      @async.WaitedTaskAlreadyCancelled => ()
       err => raise err
     }
   })
@@ -455,7 +455,7 @@ async test "serve cancels handler when chunked request body disconnects" {
     )
     serve_task.cancel()
     serve_task.wait() catch {
-      @async.TaskCancelled => ()
+      @async.WaitedTaskAlreadyCancelled => ()
       err => raise err
     }
   })
@@ -500,7 +500,7 @@ async test "serve does not treat complete body eof as disconnect" {
     }
     serve_task.cancel()
     serve_task.wait() catch {
-      @async.TaskCancelled => ()
+      @async.WaitedTaskAlreadyCancelled => ()
       err => raise err
     }
   })
@@ -545,7 +545,7 @@ async test "serve does not treat empty request body as disconnect" {
     }
     serve_task.cancel()
     serve_task.wait() catch {
-      @async.TaskCancelled => ()
+      @async.WaitedTaskAlreadyCancelled => ()
       err => raise err
     }
   })

@@ -1,7 +1,7 @@
 ///|
 async fn expect_task_cancelled(task : @async.Task[Unit]) -> Unit {
   try @async.with_timeout(1000, () => task.wait()) catch {
-    @async.TaskCancelled => ()
+    @async.WaitedTaskAlreadyCancelled => ()
     err => raise err
   } noraise {
     _ => fail("expected task cancellation")
