@@ -106,8 +106,8 @@ pub fn ModuleContext::mount(
   self : ModuleContext,
   path : String,
   app : App,
-  take_ownership? : Bool = true,
-  error_mode? : MountErrorMode = Propagate,
+  take_ownership~ : Bool = true,
+  error_mode~ : MountErrorMode = Propagate,
 ) -> Unit raise RouterError {
   if take_ownership {
     self.on_close(() => app.close())

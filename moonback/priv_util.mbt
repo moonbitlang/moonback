@@ -22,7 +22,7 @@ fn extract_host(host_port : String) -> StringView {
 }
 
 ///|
-fn status_to_reason_phrase(code : Int) -> String {
+fn status_to_reason_phrase(code : Int32) -> String {
   match code {
     100 => "Continue"
     101 => "Switching Protocols"

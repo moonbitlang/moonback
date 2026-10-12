@@ -3,7 +3,7 @@ struct Context {
   app : App
   mut conn_info : ConnectionInfo
   mut committed : Bool
-  mut userdata : @immut/sorted_map.SortedMap[Int, TypedBox]
+  mut userdata : @immut/sorted_map.SortedMap[Int32, TypedBox]
 }
 
 ///|

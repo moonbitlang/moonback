@@ -5,7 +5,7 @@
 ///
 /// **Important Notes**: The responder is only valid during request handling.
 /// Do not store it or use it after the response cycle completes.
-pub(all) struct Responder(async (Int, Headers) -> &WriteFlusher)
+pub(all) struct Responder(async (Int32, Headers) -> &WriteFlusher)
 
 ///|
 fn Responder::from_conn(conn : TrackedServerConnection) -> Responder {
@@ -38,7 +38,7 @@ fn Responder::track_committed(
 /// Sends the status line and headers, then returns the body writer.
 pub async fn Responder::respond(
   self : Responder,
-  status? : Int = 200,
+  status~ : Int32 = 200,
   headers? : &ToHeaders,
 ) -> &WriteFlusher {
   (self.0)(
@@ -54,7 +54,7 @@ pub async fn Responder::respond(
 /// Sends a response without writing a body.
 pub async fn Responder::send_void(
   self : Responder,
-  status? : Int = 200,
+  status~ : Int32 = 200,
   headers? : &ToHeaders,
 ) -> Unit {
   let _ = self.respond(status~, headers?)
@@ -65,9 +65,9 @@ pub async fn Responder::send_void(
 pub async fn Responder::send_json(
   self : Responder,
   json : Json,
-  status? : Int = 200,
+  status~ : Int32 = 200,
   headers? : &ToHeaders,
-  indent? : Int,
+  indent? : Int32,
 ) -> Unit {
   self
   .respond(
@@ -85,7 +85,7 @@ pub async fn Responder::send_json(
 pub async fn Responder::send_text(
   self : Responder,
   text : String,
-  status? : Int = 200,
+  status~ : Int32 = 200,
   headers? : &ToHeaders,
 ) -> Unit {
   self
@@ -104,7 +104,7 @@ pub async fn Responder::send_text(
 pub async fn Responder::send_html(
   self : Responder,
   html : Html,
-  status? : Int = 200,
+  status~ : Int32 = 200,
   headers? : &ToHeaders,
 ) -> Unit {
   let w = self.respond(

@@ -35,10 +35,10 @@ pub extend &WriteFlusher with Flusher::{flush}
 /// (as long as there is no one else currently listening on the same address).
 /// This is useful for avoiding "address already in use" error.
 pub async fn listen(
-  reuse_addr? : Bool = true,
-  dual_stack? : Bool = true,
-  host? : String = "127.0.0.1",
-  port? : UInt16 = 0,
+  reuse_addr~ : Bool = true,
+  dual_stack~ : Bool = true,
+  host~ : String = "127.0.0.1",
+  port~ : UInt16 = 0,
 ) -> @http.Server {
   let addr = @socket.Addr::parse(join_host_port(host, port))
   Server(addr, dual_stack~, reuse_addr~)

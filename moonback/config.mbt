@@ -1,15 +1,15 @@
 ///|
 /// Runtime configuration for an application instance.
 pub struct Config {
-  max_connections : Int? // Maximum number of concurrent connections. `None` means no limit.
+  max_connections : Int32? // Maximum number of concurrent connections. `None` means no limit.
   stop_timeout : Double // Grace period, in seconds, for in-flight connections during shutdown.
   trust_proxy : Bool // Whether proxy forwarding headers are trusted.
-  priv custom : @immut/sorted_map.SortedMap[Int, TypedBox] // Custom configuration values, indexed by integer keys.
+  priv custom : @immut/sorted_map.SortedMap[Int32, TypedBox] // Custom configuration values, indexed by integer keys.
 }
 
 ///|
 struct CustomConfigEntry {
-  key : Int
+  key : Int32
   value : TypedBox
 }
 
@@ -23,9 +23,9 @@ pub fn[T] Config::custom(key : TypedKey[T], value : T) -> CustomConfigEntry {
 /// `stop_timeout` defaults to `30` seconds.
 /// `trust_proxy` defaults to `false`.
 pub fn Config::Config(
-  max_connections? : Int,
-  stop_timeout? : Double = 30,
-  trust_proxy? : Bool = false,
+  max_connections? : Int32,
+  stop_timeout~ : Double = 30,
+  trust_proxy~ : Bool = false,
   custom? : ArrayView[CustomConfigEntry],
 ) -> Config {
   {

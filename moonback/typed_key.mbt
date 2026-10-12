@@ -4,19 +4,19 @@ pub extenum TypedBox
 ///|
 /// A typed key used to store and retrieve custom values from typed stores.
 struct TypedKey[T] {
-  val : Int
+  val : Int32
   name : String
   box : (T) -> TypedBox
   unbox : (TypedBox) -> T?
 }
 
 ///|
-let _typed_key_next : Ref[Int] = { val: 0, }
+let _typed_key_next : Ref[Int32] = { val: 0, }
 
 ///|
 /// Creates a fresh typed key with custom boxing and unboxing logic.
 pub fn[T] TypedKey::TypedKey(
-  name? : String = "unnamed",
+  name~ : String = "unnamed",
   box~ : (T) -> TypedBox,
   unbox~ : (TypedBox) -> T?,
 ) -> TypedKey[T] {

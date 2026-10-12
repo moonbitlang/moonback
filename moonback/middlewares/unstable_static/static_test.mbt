@@ -5,8 +5,8 @@ let fixture_root = "middlewares/unstable_static/testdata"
 async fn send_request(
   middleware : @moonback.Middleware,
   path : String,
-  extra_routes? : @moonback.Module = Module(_ctx => ()),
-) -> (Int, String?, String) {
+  extra_routes~ : @moonback.Module = Module(_ctx => ()),
+) -> (Int32, String?, String) {
   let app = @moonback.App(
     Module(ctx => {
       ctx.add_middleware(middleware)

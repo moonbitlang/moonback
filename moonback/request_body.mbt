@@ -41,7 +41,7 @@ async fn RequestBody::data(self : RequestBody) -> &@io.Data {
 /// This can only be called once, and `no_buffer=false` is not supported yet.
 pub fn RequestBody::reader(
   self : RequestBody,
-  no_buffer? : Bool = true,
+  no_buffer~ : Bool = true,
 ) -> &@io.Reader raise {
   if !no_buffer {
     fail(

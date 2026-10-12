@@ -12,7 +12,7 @@ async fn expect_task_cancelled(task : @async.Task[Unit]) -> Unit {
 async test "request cancellation bypasses error handlers and runs cleanup" {
   let started = @async.Semaphore(1, initial_value=0)
   let blocked = @async.CondVar::Cond()
-  let statuses : Array[Int] = []
+  let statuses : Array[Int32] = []
   let mut cleaned_up = false
   let mut error_cleanup = false
   let mut caught = false

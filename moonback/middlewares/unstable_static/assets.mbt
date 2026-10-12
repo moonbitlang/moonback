@@ -13,8 +13,8 @@ priv enum StaticSource {
 /// follow the same rules as `new`.
 pub fn from_assets(
   assets : Map[String, Bytes],
-  rewrite_trailing_slash_index? : Bool = false,
-  history_fallback? : String? = None,
+  rewrite_trailing_slash_index~ : Bool = false,
+  history_fallback~ : String? = None,
 ) -> @moonback.Middleware {
   static_middleware(
     Assets(assets.copy()),
@@ -72,7 +72,7 @@ async fn send_content(
 }
 
 ///|
-fn hex_digit(byte : Byte) -> Int? {
+fn hex_digit(byte : Byte) -> Int32? {
   match byte.to_int() {
     n if n >= 48 && n <= 57 => Some(n - 48)
     n if n >= 65 && n <= 70 => Some(n - 65 + 10)

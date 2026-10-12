@@ -1,5 +1,5 @@
 ///|
-async fn http_get_text(port : Int, path : String) -> (Int, String) {
+async fn http_get_text(port : Int32, path : String) -> (Int32, String) {
   let (response, body) = @http.get("http://127.0.0.1:\{port}\{path}")
   (response.code, body.text())
 }

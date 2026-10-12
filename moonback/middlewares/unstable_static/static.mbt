@@ -149,7 +149,7 @@ async fn send_file(
   req : @moonback.Request,
   res : @moonback.Responder,
   file_path : String,
-  on_missing? : @moonback.Handler = default_missing_handler,
+  on_missing~ : @moonback.Handler = default_missing_handler,
 ) -> Unit {
   try {
     let file = @fs.open(file_path, mode=ReadOnly)
@@ -187,8 +187,8 @@ fn history_fallback_responder(
 ///|
 pub fn new(
   root~ : String,
-  rewrite_trailing_slash_index? : Bool = false,
-  history_fallback? : String? = None,
+  rewrite_trailing_slash_index~ : Bool = false,
+  history_fallback~ : String? = None,
 ) -> @moonback.Middleware {
   static_middleware(
     Directory(root),
