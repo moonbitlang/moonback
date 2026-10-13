@@ -14,7 +14,7 @@ let key : @moonback.TypedKey[String] = TypedKey(box=id => RequestId(id), unbox=e
 ///|
 pub fn new(
   generator~ : () -> String,
-  header? : String? = Some("X-Request-ID"),
+  header~ : String? = Some("X-Request-ID"),
 ) -> @moonback.Middleware {
   Middleware(next => {
     (req, res) => {

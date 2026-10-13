@@ -1,19 +1,19 @@
 ///|
-let _headers_next_owner_id : Ref[Int] = { val: 0, }
+let _headers_next_owner_id : Ref[Int32] = { val: 0, }
 
 ///|
-const HEADERS_SHARED_OWNER_ID : Int = -1
+const HEADERS_SHARED_OWNER_ID : Int32 = -1
 
 ///|
 /// A mutable HTTP header collection with special handling for `Set-Cookie`.
 priv struct HeaderStore {
-  mut owner_id : Int
+  mut owner_id : Int32
   headers : @http.Headers
   mut set_cookie : Array[StringView]
 }
 
 ///|
-fn HeaderStore::copy(self : HeaderStore, owner_id? : Int) -> HeaderStore {
+fn HeaderStore::copy(self : HeaderStore, owner_id? : Int32) -> HeaderStore {
   {
     owner_id: owner_id.unwrap_or(self.owner_id),
     headers: self.headers.copy(),
@@ -189,7 +189,7 @@ pub trait ToHeaders {
 
 ///|
 struct MutHeaders {
-  owner_id : Int
+  owner_id : Int32
   mut store : HeaderStore
 }
 

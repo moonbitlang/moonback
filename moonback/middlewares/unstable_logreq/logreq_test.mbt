@@ -13,7 +13,7 @@ impl @io.Writer for CaptureWriter with fn write_once(self, buf, offset~, len~) {
 async fn send_request(
   meth : @http.RequestMethod,
   path : String,
-  status? : Int = 204,
+  status~ : Int32 = 204,
 ) -> String {
   let captured = { log: StringBuilder(), }
   let app = @moonback.App(

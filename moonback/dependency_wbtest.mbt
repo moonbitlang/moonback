@@ -1,7 +1,7 @@
 ///|
 extenum TypedBox += {
   StringDependency(String)
-  IntDependency(Int)
+  IntDependency(Int32)
 }
 
 ///|
@@ -17,7 +17,7 @@ let _string_dependency_key : TypedKey[String] = TypedKey(
 )
 
 ///|
-let _unnamed_int_dependency_key : TypedKey[Int] = TypedKey(
+let _unnamed_int_dependency_key : TypedKey[Int32] = TypedKey(
   box=value => IntDependency(value),
   unbox=err => {
     match err {

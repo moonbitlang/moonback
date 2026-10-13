@@ -354,7 +354,7 @@ test "complex - realistic api routes" {
 
 ///|
 test "static route - unicode and colliding first code units" {
-  let trie : Trie[Int] = Trie::root()
+  let trie : Trie[Int32] = Trie::root()
   trie.insert("/a/item", 1)
   trie.insert("/á/item", 2)
   trie.insert("/中文/😀", 3)
@@ -367,7 +367,7 @@ test "static route - unicode and colliding first code units" {
 
 ///|
 test "catch all preserves normalized segments after backtracking" {
-  let trie : Trie[Int] = Trie::root()
+  let trie : Trie[Int32] = Trie::root()
   trie.insert("/files/:id/end", 1)
   trie.insert("/files/*rest", 2)
   for path in ["/files/a/b/", "//files///a//b///", "files/a/b"] {
@@ -381,7 +381,7 @@ test "catch all preserves normalized segments after backtracking" {
 
 ///|
 test "catch all handles long paths and independent parameter maps" {
-  let trie : Trie[Int] = Trie::root()
+  let trie : Trie[Int32] = Trie::root()
   trie.insert("/files/*rest", 1)
   let rest = Array::make(128, "中文😀").join("/")
   guard trie.search("/files/" + rest) is Some(first) else {
@@ -396,7 +396,7 @@ test "catch all handles long paths and independent parameter maps" {
 
 ///|
 test "catch all normalizes every separator combination" {
-  let trie : Trie[Int] = Trie::root()
+  let trie : Trie[Int32] = Trie::root()
   trie.insert("/files/*rest", 1)
   for leading in ["/", "//"] {
     for first in ["/", "//", "///"] {

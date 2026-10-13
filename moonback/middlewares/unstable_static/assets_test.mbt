@@ -2,8 +2,8 @@
 async fn request_assets(
   middleware : @moonback.Middleware,
   path : String,
-  meth? : @http.RequestMethod = Get,
-  routes? : @moonback.Module = Module(_ctx => ()),
+  meth~ : @http.RequestMethod = Get,
+  routes~ : @moonback.Module = Module(_ctx => ()),
 ) -> (@http.Response, Bytes) {
   let app = @moonback.App(
     Module(ctx => {

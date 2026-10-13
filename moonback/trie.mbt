@@ -184,7 +184,7 @@ fn[T] Trie::search(self : Trie[T], path : StringView) -> MatchResult[T]? {
 fn[T] Trie::search_recursive(
   self : Trie[T],
   path : StringView,
-  offset : Int,
+  offset : Int32,
   params : Map[StringView, StringView],
 ) -> Trie[T]? {
   // Scan only the current segment. Repeated and trailing slashes are ignored,

@@ -4,7 +4,7 @@ priv struct AppInst {
   router : Router
   mut middlewares : Array[Middleware]
   mut close_hook : Array[() -> Unit]
-  mut dependencies : @immut/sorted_map.SortedMap[Int, TypedBox]
+  mut dependencies : @immut/sorted_map.SortedMap[Int32, TypedBox]
 }
 
 ///|
@@ -81,7 +81,7 @@ async fn AppInst::handle_request(
 /// This returns after the root module has finished loading.
 pub async fn App::App(
   root : Module,
-  config? : Config = Config::default(),
+  config~ : Config = Config::default(),
 ) -> App {
   let inst = AppInst::init(root, config)
   { inst, }
@@ -163,7 +163,7 @@ async fn App::serve_on_connection(
 pub async fn App::serve(
   self : App,
   listener : &Listener,
-  take_ownership? : Bool = true,
+  take_ownership~ : Bool = true,
 ) -> Unit {
   let no_protect = @async.CondVar::Cond()
   let connection_finished = @async.CondVar::Cond()

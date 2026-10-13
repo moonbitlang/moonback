@@ -3,7 +3,7 @@ priv suberror ClientDisconnected
 
 ///|
 priv struct CloseHandler {
-  id : Int
+  id : Int32
   handler : () -> Unit
 }
 
@@ -12,7 +12,7 @@ priv struct TrackedServerConnection {
   conn : @http.ServerConnection
   mut client_disconnected : Bool
   mut unusable : Bool
-  mut next_close_handler_id : Int
+  mut next_close_handler_id : Int32
   mut close_handlers : Array[CloseHandler]
 }
 
@@ -101,10 +101,10 @@ async fn TrackedServerConnection::read_request(
 ///|
 async fn TrackedServerConnection::send_response(
   self : TrackedServerConnection,
-  code : Int,
+  code : Int32,
   reason : String,
-  extra_headers? : @http.Headers = Map([]),
-  cookies? : Array[@http.Cookie] = [],
+  extra_headers~ : @http.Headers = Map([]),
+  cookies~ : Array[@http.Cookie] = [],
 ) -> Unit {
   errdefer self.notify_unusable()
   self.conn.send_response(code, reason, extra_headers~, cookies~) catch {

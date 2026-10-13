@@ -10,7 +10,7 @@ pub struct QueryParams {
 }
 
 ///|
-fn hex_value(ch : UInt16) -> Int? {
+fn hex_value(ch : UInt16) -> Int32? {
   let code = ch.to_int()
   if code >= '0'.to_int() && code <= '9'.to_int() {
     Some(code - '0'.to_int())

@@ -5,7 +5,7 @@ fn apply_preflight_headers(
   methods : String,
   allow_headers : String,
   credentials : Bool,
-  max_age : Int,
+  max_age : Int32,
 ) -> Unit {
   headers.set("Access-Control-Allow-Origin", origin)
   headers.set("Access-Control-Allow-Methods", methods)
@@ -61,12 +61,12 @@ fn cors_responder(
 
 ///|
 pub fn new(
-  origin? : String = "*",
-  methods? : String = "*",
-  allow_headers? : String = "*",
-  expose_headers? : String = "*",
-  credentials? : Bool = false,
-  max_age? : Int = 86400,
+  origin~ : String = "*",
+  methods~ : String = "*",
+  allow_headers~ : String = "*",
+  expose_headers~ : String = "*",
+  credentials~ : Bool = false,
+  max_age~ : Int32 = 86400,
 ) -> @moonback.Middleware {
   Middleware(next => {
     (req, res) => {

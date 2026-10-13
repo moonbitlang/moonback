@@ -48,7 +48,7 @@ impl Flusher for NoopWriteFlusher with fn flush(_self) -> Unit {
 impl WriteFlusher for NoopWriteFlusher
 
 ///|
-async fn run_with_fake_responder(app : App) -> Array[Int] {
+async fn run_with_fake_responder(app : App) -> Array[Int32] {
   let statuses = []
   let writer = NoopWriteFlusher::{ }
   @async.with_task_group(group => {
