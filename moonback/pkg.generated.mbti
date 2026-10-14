@@ -9,6 +9,8 @@ import {
 }
 
 // Values
+pub fn cancel_on_shutdown() -> Middleware
+
 pub async fn default_handler(Request, Responder) -> Unit
 
 pub async fn listen(reuse_addr? : Bool, dual_stack? : Bool, host? : String, port? : UInt16) -> @http.Server
@@ -32,6 +34,8 @@ pub fn App::close(Self) -> Unit
 pub fn App::config(Self) -> Config
 pub async fn App::handle_request(Self, Request, Responder) -> Unit
 pub async fn App::serve(Self, &Listener, take_ownership? : Bool) -> Unit
+pub fn App::shutdown_requested(Self) -> Bool
+pub async fn App::wait_for_shutdown_requested(Self) -> Unit
 
 pub struct Config {
   max_connections : Int?
@@ -78,6 +82,7 @@ pub async fn HtmlBuilder::write_string(Self, String) -> Unit
 pub async fn[T : WriteToHtmlBuilder] HtmlBuilder::write_string_interpolation(Self, T) -> Unit
 
 pub(all) struct Middleware((async (Request, Responder) -> Unit) -> async (Request, Responder) -> Unit)
+pub fn Middleware::apply(Self, async (Request, Responder) -> Unit) -> async (Request, Responder) -> Unit
 pub fn Middleware::chain(ArrayView[Self]) -> Self
 pub fn Middleware::compose(Self, Self) -> Self
 pub fn Middleware::pass_through() -> Self

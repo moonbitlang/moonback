@@ -21,6 +21,37 @@ pub fn Middleware::pass_through() -> Middleware {
 }
 
 ///|
+/// Cancels the wrapped handler when the request's serving app begins shutdown.
+/// Long-lived streams and WebSocket handlers can use this to stop without
+/// waiting for `Config.stop_timeout`. Handler `defer` and `errdefer` blocks
+/// still run; async cleanup can use `@async.protect_from_cancel`.
+/// Interrupted HTTP connections are closed without finalizing the response.
+/// Apply it to a single handler with `Middleware::apply`, or register it with
+/// `ModuleContext::add_middleware` for every request.
+pub fn cancel_on_shutdown() -> Middleware {
+  next => {
+    (req, res) => {
+      @async.with_task_group(group => {
+        group.spawn_bg(
+          () => {
+            req.app().wait_for_shutdown_requested()
+            // return_immediately cancels next but returns normally to the caller.
+            // Close the interrupted HTTP response instead of ending or reusing it.
+            match req.ctx.conn_info {
+              Normal(_, conn, _) => conn.notify_unusable()
+              Mock | Upgraded(_, _) => ()
+            }
+            group.return_immediately(())
+          },
+          no_wait=true,
+        )
+        next(req, res)
+      })
+    }
+  }
+}
+
+///|
 /// Composes two middlewares into one.
 /// The current middleware runs before `other`.
 pub fn Middleware::compose(self : Middleware, other : Middleware) -> Middleware {
@@ -34,4 +65,11 @@ pub fn Middleware::chain(middlewares : ArrayView[Middleware]) -> Middleware {
     [] => Middleware(next => next)
     [first, .. rest] => first.compose(Middleware::chain(rest))
   }
+}
+
+///|
+/// Wraps a handler with this middleware.
+/// Use this to apply middleware to an individual route handler.
+pub fn Middleware::apply(self : Middleware, handler : Handler) -> Handler {
+  (self.0)(handler)
 }

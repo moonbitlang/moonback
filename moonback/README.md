@@ -12,6 +12,7 @@ module-scoped dependency injection.
 - Module-based app composition with `Module` and `ModuleContext`
 - Route registration for `GET`, `POST`, and arbitrary HTTP methods
 - Middleware chaining
+- Shutdown notification and opt-in cancellation for long-lived handlers
 - Typed query parameter and cookie helpers
 - Response helpers for text, type-safe HTML, JSON, empty responses, and WebSocket upgrade
 - App lifecycle cleanup with `ctx.on_close`
@@ -25,8 +26,8 @@ Add MoonBack to your `moon.mod`:
 
 ```moonbit
 import {
-  "moonbitlang/async@0.22.0",
-  "moonbitlang/moonback@0.8.2",
+  "moonbitlang/async@0.22.5",
+  "moonbitlang/moonback@0.8.9",
 }
 ```
 
@@ -178,6 +179,7 @@ Useful request APIs:
 - `req.body.text()`
 - `req.body.binary()`
 - `req.body.json()`
+- `req.app()`
 - `req.query()`
 - `req.cookie()`
 - `req.ip()`
@@ -285,6 +287,9 @@ let app = @moonback.App(ctx => {
 The returned WebSocket connection is valid only during request handling. Do not
 store it after the handler finishes.
 
+Wrap the handler with [`cancel_on_shutdown().apply(...)`](#middleware) when it
+should stop as soon as graceful shutdown begins.
+
 ## Middleware
 
 A middleware wraps the next handler.
@@ -304,6 +309,39 @@ let app = @moonback.App(ctx => {
 ```
 
 Middleware is applied in registration order.
+
+Use `Middleware::apply` to wrap an individual handler. For example,
+`cancel_on_shutdown` cancels the wrapped handler when the request's serving app
+begins shutting down, without waiting for `Config.stop_timeout`. This is useful
+for long-lived streaming responses and WebSockets. Interrupted HTTP connections
+are closed without finalizing the response:
+
+```moonbit
+ctx.get(
+  "/events",
+  @moonback.cancel_on_shutdown().apply((_req, res) => {
+    let w = res.respond(
+      status=200,
+      headers={ "Content-Type": "text/event-stream" },
+    )
+    for ;; {
+      w.write("data: ping\n\n")
+      w.flush()
+      @async.sleep(1000)
+    }
+  }),
+)
+```
+
+To apply the same policy to every request, register it as app middleware:
+
+```moonbit
+ctx.add_middleware(@moonback.cancel_on_shutdown())
+```
+
+Put handler cleanup in `defer` or `errdefer`, which still run on cancellation.
+See [cancellation and graceful shutdown](#cancellation-and-graceful-shutdown)
+for shutdown notification and cleanup behavior.
 
 ## Dependency injection
 
@@ -397,7 +435,9 @@ Config fields:
 
 - `trust_proxy`: use proxy headers such as `X-Forwarded-For`
 - `max_connections`: limit concurrent accepted connections
-- `stop_timeout`: graceful shutdown timeout in seconds
+- `stop_timeout`: grace period for in-flight connections on cancellation, in
+  seconds; defaults to `30`. A value of `0` or less skips the grace period.
+  Handlers wrapped in `cancel_on_shutdown` are cancelled at shutdown start.
 
 You can also attach typed custom values to app configuration. Custom config
 uses the same `TypedKey` pattern as dependency injection and request userdata,
@@ -446,9 +486,13 @@ defer app.close()
 
 Close hooks run in reverse registration order.
 
-## Cancellation
+`app.close()` runs these hooks; it does not initiate graceful server shutdown
+or notify shutdown waiters. Cancel `app.serve(...)` and let it finish before
+closing the app, as in the `defer app.close()` examples above.
 
-MoonBack uses `moonbitlang/async` 0.22.0. Cancellation is no longer an ordinary
+## Cancellation and graceful shutdown
+
+MoonBack uses `moonbitlang/async` 0.22.5. Cancellation is no longer an ordinary
 error: it bypasses `catch` blocks and still runs `defer` and `errdefer`. Put
 resource cleanup in those blocks instead of catch-all error handlers. Async
 cleanup that must complete after cancellation needs `@async.protect_from_cancel`,
@@ -456,9 +500,38 @@ ideally with a bounded timeout.
 
 Cancelling `app.serve(listener)` stops accepting connections and closes the
 listener unless `take_ownership=false`. In-flight requests, including WebSocket
-handlers, can finish within `Config.stop_timeout`; any remaining handlers are
-cancelled when that grace period expires. Serving exits early when all
-connections finish, and the original cancellation propagates to the caller.
+handlers, can finish within `Config.stop_timeout` by default; any remaining
+handlers are cancelled when that grace period expires. Handlers wrapped in
+`cancel_on_shutdown` are cancelled at shutdown start instead. Serving exits
+early when all connections finish, and the original cancellation propagates
+to the caller.
+
+When `app.serve(...)` begins shutting down because of cancellation or an error,
+it sets the app's shutdown state and wakes all shutdown waiters before waiting
+for in-flight connections. The grace period applies to cancellation; an error
+also triggers the notification but skips that grace period.
+
+- `app.shutdown_requested()` returns whether shutdown has begun.
+- `app.wait_for_shutdown_requested()` waits for shutdown to begin, or returns
+  immediately if it has already begun.
+
+These APIs observe shutdown; they do not initiate it or wait for it to finish.
+Inside a handler, use `req.app()` to access the serving app. The shutdown state
+stays set: calling `serve` again on that app panics, so create a new `App` to
+restart the server.
+
+The [graceful shutdown example](../examples/graceful_shutdown) serves a finite
+stream at `/` and a WebSocket at `/ws` wrapped in `cancel_on_shutdown`. Run it
+from the repository root:
+
+```bash
+moon run examples/graceful_shutdown
+```
+
+Open `http://127.0.0.1:3000/` and watch the browser console for WebSocket messages.
+Press Ctrl+C while the response is streaming: the WebSocket handler is cancelled
+at shutdown start, the HTTP stream can finish within the grace period, and
+`defer app.close()` runs the cleanup hook.
 
 Use `@async.handle_cancellation` only when you intentionally need to observe or
 handle cancellation. A `None` result means cancellation occurred; the task
@@ -488,6 +561,11 @@ let app = @moonback.App(ctx => {
 Mounted apps keep their own routes and middleware. By default, their unhandled
 errors propagate through the parent app's middleware and final error boundary,
 so application-wide error handling can be registered once on the parent.
+
+Mounted handlers retain the request's serving app in `req.app()`. Consequently,
+`cancel_on_shutdown` registered inside a mounted app observes the serving
+parent's shutdown, rather than a separate shutdown state on the mounted app.
+The mounted app's own shutdown state is not changed by the parent's shutdown.
 
 Use `error_mode=Isolate` when a mounted app should handle its own unhandled
 errors instead:

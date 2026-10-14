@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/int",
   "moonbitlang/async",
   "moonbitlang/moonback",
 }

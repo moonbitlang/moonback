@@ -5,6 +5,8 @@ priv struct AppInst {
   mut middlewares : Array[Middleware]
   mut close_hook : Array[() -> Unit]
   mut dependencies : @immut/sorted_map.SortedMap[Int32, TypedBox]
+  mut shutdown_requested : Bool
+  mut shutdown_requested_signal : @async.CondVar
 }
 
 ///|
@@ -21,6 +23,8 @@ async fn AppInst::init(root : Module, config : Config) -> AppInst {
     middlewares: [],
     close_hook: [],
     dependencies: @immut/sorted_map.SortedMap::new(),
+    shutdown_requested: false,
+    shutdown_requested_signal: @async.CondVar::Cond(),
   }
   (root.0)({ inst, })
   inst
@@ -160,11 +164,18 @@ async fn App::serve_on_connection(
 ///
 /// On cancellation, in-flight connections are given up to
 /// `Config.stop_timeout` seconds to finish gracefully.
+/// Handlers wrapped in `cancel_on_shutdown` are cancelled when shutdown begins.
+///
+/// Cancellation or an error sets `shutdown_requested` and wakes
+/// `wait_for_shutdown_requested` waiters before draining connections.
+/// Only cancellation allows the configured grace period.
+/// Calling `serve` after shutdown has begun panics; create a new app to restart.
 pub async fn App::serve(
   self : App,
   listener : &Listener,
   take_ownership~ : Bool = true,
 ) -> Unit {
+  guard !self.inst.shutdown_requested else { panic() }
   let no_protect = @async.CondVar::Cond()
   let connection_finished = @async.CondVar::Cond()
   let mut active_connections = 0
@@ -173,6 +184,8 @@ pub async fn App::serve(
       if take_ownership {
         listener.close()
       }
+      self.inst.shutdown_requested = true
+      self.inst.shutdown_requested_signal.broadcast()
       defer no_protect.broadcast()
       if @async.is_being_cancelled() &&
         self.inst.config.stop_timeout is timeout &&
@@ -229,8 +242,31 @@ pub async fn App::serve(
 }
 
 ///|
+/// Returns whether `serve` has begun shutting down due to cancellation or an error.
+/// The state stays true once set. This does not request shutdown or indicate
+/// that all connections have finished.
+pub fn App::shutdown_requested(self : App) -> Bool {
+  self.inst.shutdown_requested
+}
+
+///|
+/// Waits until `serve` begins shutting down due to cancellation or an error.
+/// Returns immediately if shutdown has already begun.
+/// This observes shutdown start; it does not initiate shutdown or wait for
+/// connections to finish. Calling `close` does not trigger this notification.
+pub async fn App::wait_for_shutdown_requested(self : App) -> Unit {
+  if self.inst.shutdown_requested {
+    ()
+  } else {
+    self.inst.shutdown_requested_signal.wait()
+  }
+}
+
+///|
 /// Unload root module - run registered on_close hooks.
 /// The app should not be used after this.
+/// This does not stop `serve` or notify shutdown waiters. Cancel and wait for
+/// `serve` to finish before closing the app.
 ///
 /// Example:
 /// ```moonbit nocheck

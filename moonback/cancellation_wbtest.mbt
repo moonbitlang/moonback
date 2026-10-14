@@ -315,3 +315,156 @@ async test "serve cancels upgraded websocket handlers at the shutdown deadline" 
   })
   assert_true(cancelled)
 }
+
+///|
+async test "cancel_on_shutdown closes connections before a response starts" {
+  for max_connections in [None, Some(1)] {
+    let started = @async.Semaphore(1, initial_value=0)
+    let blocked = @async.CondVar::Cond()
+    let mut cancelled = false
+    let mut error_cleanup = false
+    let mut caught = false
+    let mut completed = false
+    let app = App(
+      ctx => {
+        ctx.add_middleware(
+          Middleware(next => {
+            (req, res) => {
+              next(req, res) catch {
+                _ => {
+                  caught = true
+                  res.send_void(status=500)
+                }
+              }
+            }
+          }),
+        )
+        ctx.get(
+          "/",
+          cancel_on_shutdown().apply((_req, res) => {
+            defer {
+              cancelled = @async.is_being_cancelled()
+            }
+            errdefer {
+              error_cleanup = true
+            }
+            started.release()
+            blocked.wait()
+            completed = true
+            res.send_text("finished")
+          }),
+        )
+      },
+      config=Config(max_connections?, stop_timeout=5),
+    )
+    defer app.close()
+    @async.with_timeout(1000, () => {
+      @async.with_task_group(group => {
+        let server = listen(port=0)
+        let serve_task = group.spawn(() => app.serve(server))
+        let client = @socket.Tcp::connect_to_host(
+          "127.0.0.1",
+          port=server.addr.port(),
+        )
+        defer client.close()
+        client.write("GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
+        started.acquire()
+        serve_task.cancel()
+        expect_task_cancelled(serve_task)
+        let response = client.read_all().binary() catch {
+            @io.ReaderClosed | @os_error.OSError(_) => b""
+            err => raise err
+          }
+        @test.assert_eq(response, b"")
+      })
+    })
+    assert_true(cancelled)
+    assert_true(error_cleanup)
+    assert_false(caught)
+    assert_false(completed)
+  }
+}
+
+///|
+async test "cancel_on_shutdown does not finish an interrupted chunked response" {
+  let started = @async.Semaphore(1, initial_value=0)
+  let blocked = @async.CondVar::Cond()
+  let mut cancelled = false
+  let app = App(
+    ctx => {
+      ctx.get(
+        "/",
+        cancel_on_shutdown().apply((_req, res) => {
+          defer {
+            cancelled = @async.is_being_cancelled()
+          }
+          let writer = res.respond(headers={ "Transfer-Encoding": "chunked" })
+          writer.write("partial")
+          writer.flush()
+          started.release()
+          blocked.wait()
+        }),
+      )
+    },
+    config=Config(stop_timeout=5),
+  )
+  defer app.close()
+  @async.with_timeout(1000, () => {
+    @async.with_task_group(group => {
+      let server = listen(port=0)
+      let serve_task = group.spawn(() => app.serve(server))
+      let client = @socket.Tcp::connect_to_host(
+        "127.0.0.1",
+        port=server.addr.port(),
+      )
+      defer client.close()
+      client.write("GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
+      started.acquire()
+      serve_task.cancel()
+      expect_task_cancelled(serve_task)
+      let response = client.read_all().text()
+      assert_true(response.contains("partial"))
+      assert_false(response.has_suffix("0\r\n\r\n"))
+    })
+  })
+  assert_true(cancelled)
+}
+
+///|
+async test "cancel_on_shutdown cancels websocket handlers before the deadline" {
+  let started = @async.Semaphore(1, initial_value=0)
+  let blocked = @async.CondVar::Cond()
+  let mut cancelled = false
+  let app = App(
+    ctx => {
+      ctx.get(
+        "/ws",
+        cancel_on_shutdown().apply((req, res) => {
+          let websocket = res.upgrade(req)
+          defer websocket.close()
+          defer {
+            cancelled = @async.is_being_cancelled()
+          }
+          started.release()
+          blocked.wait()
+        }),
+      )
+    },
+    config=Config(stop_timeout=5),
+  )
+  defer app.close()
+  @async.with_timeout(1000, () => {
+    @async.with_task_group(group => {
+      let server = listen(port=0)
+      let serve_task = group.spawn(() => app.serve(server))
+      let websocket = @websocket.connect(
+        "ws://127.0.0.1:\{server.addr.port()}/ws",
+      )
+      defer websocket.close()
+      started.acquire()
+      serve_task.cancel()
+      expect_task_cancelled(serve_task)
+    })
+  })
+  assert_true(cancelled)
+}

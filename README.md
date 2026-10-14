@@ -18,8 +18,8 @@ Add MoonBack to your `moon.mod`:
 
 ```moonbit
 import {
-  "moonbitlang/async@0.22.2",
-  "moonbitlang/moonback@0.8.5",
+  "moonbitlang/async@0.22.5",
+  "moonbitlang/moonback@0.8.9",
 }
 
 preferred_target = "native"
@@ -58,6 +58,12 @@ async fn main {
 See the [full guide](moonback/README.md) for routing, requests, responses,
 WebSockets, middleware, dependency injection, configuration, and lifecycle
 management.
+
+For long-lived streams and WebSockets, use `cancel_on_shutdown().apply(handler)`
+to cancel the handler when graceful shutdown begins. Other in-flight handlers
+can finish within `Config.stop_timeout`. See the
+[graceful shutdown guide](moonback/README.md#cancellation-and-graceful-shutdown)
+and the [runnable example](examples/graceful_shutdown).
 
 ## Repository layout
 
