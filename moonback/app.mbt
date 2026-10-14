@@ -29,17 +29,13 @@ async fn AppInst::init(root : Module, config : Config) -> AppInst {
 ///|
 fn AppInst::on_close(self : AppInst) -> Unit {
   self.middlewares = []
-  self.dependencies = @immut/sorted_map.SortedMap::new()
-}
-
-///|
-fn AppInst::before_close(self : AppInst) -> Unit {
   let funcs = self.close_hook
   self.close_hook = []
   for func in funcs.rev() {
     func()
   }
   guard self.close_hook.is_empty() else { panic() }
+  self.dependencies = @immut/sorted_map.SortedMap::new()
 }
 
 ///|
@@ -177,7 +173,6 @@ pub async fn App::serve(
       if take_ownership {
         listener.close()
       }
-      self.inst.before_close()
       defer no_protect.broadcast()
       if @async.is_being_cancelled() &&
         self.inst.config.stop_timeout is timeout &&
