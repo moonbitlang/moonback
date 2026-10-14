@@ -1,6 +1,6 @@
 name = "moonbitlang/moonback"
 
-version = "0.8.6"
+version = "0.8.7"
 
 description = "A web backend framework for MoonBit"
 
@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "https://github.com/moonbitlang/moonback"
 
 import {
-  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.5",
 }
 
 license = "Apache-2.0"
