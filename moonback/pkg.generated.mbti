@@ -38,12 +38,12 @@ pub fn App::shutdown_requested(Self) -> Bool
 pub async fn App::wait_for_shutdown_requested(Self) -> Unit
 
 pub struct Config {
-  max_connections : Int?
+  max_connections : Int32?
   stop_timeout : Double
   trust_proxy : Bool
   // private fields
 }
-pub fn Config::Config(max_connections? : Int, stop_timeout? : Double, trust_proxy? : Bool, custom? : ArrayView[CustomConfigEntry]) -> Self
+pub fn Config::Config(max_connections? : Int32, stop_timeout? : Double, trust_proxy? : Bool, custom? : ArrayView[CustomConfigEntry]) -> Self
 pub fn[T] Config::custom(TypedKey[T], T) -> CustomConfigEntry
 pub fn Config::default() -> Self
 pub fn[T] Config::get_custom(Self, TypedKey[T]) -> T?
@@ -152,12 +152,12 @@ pub async fn RequestBody::json(Self) -> Json
 pub fn RequestBody::reader(Self, no_buffer? : Bool) -> &@io.Reader raise
 pub async fn RequestBody::text(Self) -> String
 
-pub(all) struct Responder(async (Int, Headers) -> &WriteFlusher)
-pub async fn Responder::respond(Self, status? : Int, headers? : &ToHeaders) -> &WriteFlusher
-pub async fn Responder::send_html(Self, Html, status? : Int, headers? : &ToHeaders) -> Unit
-pub async fn Responder::send_json(Self, Json, status? : Int, headers? : &ToHeaders, indent? : Int) -> Unit
-pub async fn Responder::send_text(Self, String, status? : Int, headers? : &ToHeaders) -> Unit
-pub async fn Responder::send_void(Self, status? : Int, headers? : &ToHeaders) -> Unit
+pub(all) struct Responder(async (Int32, Headers) -> &WriteFlusher)
+pub async fn Responder::respond(Self, status? : Int32, headers? : &ToHeaders) -> &WriteFlusher
+pub async fn Responder::send_html(Self, Html, status? : Int32, headers? : &ToHeaders) -> Unit
+pub async fn Responder::send_json(Self, Json, status? : Int32, headers? : &ToHeaders, indent? : Int32) -> Unit
+pub async fn Responder::send_text(Self, String, status? : Int32, headers? : &ToHeaders) -> Unit
+pub async fn Responder::send_void(Self, status? : Int32, headers? : &ToHeaders) -> Unit
 pub async fn Responder::upgrade(Self, Request) -> @websocket.Conn
 
 pub extenum TypedBox {
