@@ -139,7 +139,7 @@ fn is_history_fallback_candidate(path : String) -> Bool {
   guard path != "" else { return true }
   let last_segment = match path.rev_find("/") {
     Some(index) => path[index + 1:]
-    None => path.view()
+    None => path[:]
   }
   !last_segment.contains_char('.')
 }
