@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn new(origin? : String, methods? : String, allow_headers? : String, expose_headers? : String, credentials? : Bool, max_age? : Int) -> @moonback.Middleware
+pub fn new(origin? : String, methods? : String, allow_headers? : String, expose_headers? : String, credentials? : Bool, max_age? : Int32) -> @moonback.Middleware
 
 // Errors
 

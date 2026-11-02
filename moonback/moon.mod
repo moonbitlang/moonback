@@ -1,6 +1,6 @@
 name = "moonbitlang/moonback"
 
-version = "0.8.9"
+version = "0.8.10"
 
 description = "A web backend framework for MoonBit"
 
