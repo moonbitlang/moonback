@@ -6,7 +6,8 @@ async fn serve_index(
   let w = res.respond(status=200, headers={
     "Content-Type": "text/html; charset=utf-8",
   })
-  w.write(
+  let text = @io.Utf8Writer(w)
+  text.write(
     (
       #|<!DOCTYPE html>
       #|<html lang="en">
@@ -120,12 +121,12 @@ async fn serve_websocket(
       let msg = ws.recv()
       match msg.kind {
         Text => {
-          let text = msg.read_all().text()
+          let text = msg.text.read_all()
           println("recv text from \{client_ip}: \{text}")
           ws.send_text("echo: \{text}")
         }
         Binary => {
-          let data = msg.read_all().binary()
+          let data = msg.read_all()
           println("recv binary from \{client_ip}: \{data.length()} bytes")
           ws.send_binary(data)
         }

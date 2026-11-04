@@ -11,7 +11,7 @@ async fn expect_task_cancelled(task : @async.Task[Unit]) -> Unit {
 ///|
 async test "request cancellation bypasses error handlers and runs cleanup" {
   let started = @async.Semaphore(1, initial_value=0)
-  let blocked = @async.CondVar::Cond()
+  let blocked = @async.Cond()
   let statuses : Array[Int32] = []
   let mut cleaned_up = false
   let mut error_cleanup = false
@@ -58,7 +58,7 @@ async test "request cancellation bypasses error handlers and runs cleanup" {
         req,
         Responder((status, _headers) => {
           statuses.push(status)
-          NoopWriteFlusher::{ }
+          NoopWriteFlusher::{ controller: @io.BinaryWriterController(), }
         }),
       )
       returned = true
@@ -128,10 +128,10 @@ async test "serve lets in-flight requests finish during graceful shutdown" {
       let server = listen(port=0)
       let serve_task = group.spawn(() => app.serve(server))
       let request = group.spawn(() => {
-        let (response, body) = @http.get(
+        let (response, body) = @http.get_text(
           "http://127.0.0.1:\{server.addr.port()}/",
         )
-        (response.code, body.text())
+        (response.code, body)
       })
       started.acquire()
       serve_task.cancel()
@@ -176,7 +176,7 @@ async test "serve cancels unfinished requests at the shutdown deadline" {
           port=server.addr.port(),
         )
         defer client.close()
-        client.write("GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
+        client.write(b"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
         @async.with_timeout(1000, () => started.acquire())
         serve_task.cancel()
         expect_task_cancelled(serve_task)
@@ -260,7 +260,7 @@ async test "serve closes accepted connections waiting for a connection slot" {
         port=listener.server.addr.port(),
       )
       defer client.close()
-      client.write("GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
+      client.write(b"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
       started.acquire()
       listener.accepted.acquire()
       let pending = @socket.Tcp::connect_to_host(
@@ -271,10 +271,10 @@ async test "serve closes accepted connections waiting for a connection slot" {
       listener.accepted.acquire()
       serve_task.cancel()
       expect_task_cancelled(serve_task)
-      let body = pending.read_all().binary() catch {
-          @io.ReaderClosed | @os_error.OSError(_) => b""
-          err => raise err
-        }
+      let body = pending.read_all() catch {
+        @io.ReaderClosed | @os_error.OsError(_, ..) => b""
+        err => raise err
+      }
       @test.assert_eq(body, b"")
     })
   })
@@ -320,7 +320,7 @@ async test "serve cancels upgraded websocket handlers at the shutdown deadline" 
 async test "cancel_on_shutdown closes connections before a response starts" {
   for max_connections in [None, Some(1)] {
     let started = @async.Semaphore(1, initial_value=0)
-    let blocked = @async.CondVar::Cond()
+    let blocked = @async.Cond()
     let mut cancelled = false
     let mut error_cleanup = false
     let mut caught = false
@@ -367,14 +367,14 @@ async test "cancel_on_shutdown closes connections before a response starts" {
           port=server.addr.port(),
         )
         defer client.close()
-        client.write("GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
+        client.write(b"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
         started.acquire()
         serve_task.cancel()
         expect_task_cancelled(serve_task)
-        let response = client.read_all().binary() catch {
-            @io.ReaderClosed | @os_error.OSError(_) => b""
-            err => raise err
-          }
+        let response = client.read_all() catch {
+          @io.ReaderClosed | @os_error.OsError(_, ..) => b""
+          err => raise err
+        }
         @test.assert_eq(response, b"")
       })
     })
@@ -388,7 +388,7 @@ async test "cancel_on_shutdown closes connections before a response starts" {
 ///|
 async test "cancel_on_shutdown does not finish an interrupted chunked response" {
   let started = @async.Semaphore(1, initial_value=0)
-  let blocked = @async.CondVar::Cond()
+  let blocked = @async.Cond()
   let mut cancelled = false
   let app = App(
     ctx => {
@@ -399,7 +399,7 @@ async test "cancel_on_shutdown does not finish an interrupted chunked response" 
             cancelled = @async.is_being_cancelled()
           }
           let writer = res.respond(headers={ "Transfer-Encoding": "chunked" })
-          writer.write("partial")
+          writer.write(b"partial")
           writer.flush()
           started.release()
           blocked.wait()
@@ -418,11 +418,11 @@ async test "cancel_on_shutdown does not finish an interrupted chunked response" 
         port=server.addr.port(),
       )
       defer client.close()
-      client.write("GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
+      client.write(b"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
       started.acquire()
       serve_task.cancel()
       expect_task_cancelled(serve_task)
-      let response = client.read_all().text()
+      let response = @utf8.decode(client.read_all())
       assert_true(response.contains("partial"))
       assert_false(response.has_suffix("0\r\n\r\n"))
     })
@@ -433,7 +433,7 @@ async test "cancel_on_shutdown does not finish an interrupted chunked response" 
 ///|
 async test "cancel_on_shutdown cancels websocket handlers before the deadline" {
   let started = @async.Semaphore(1, initial_value=0)
-  let blocked = @async.CondVar::Cond()
+  let blocked = @async.Cond()
   let mut cancelled = false
   let app = App(
     ctx => {

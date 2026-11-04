@@ -8,10 +8,6 @@ readme = "README.md"
 
 repository = "https://github.com/moonbitlang/moonback"
 
-import {
-  "moonbitlang/async@0.22.5",
-}
-
 license = "Apache-2.0"
 
 keywords = [ "moonbit", "web", "http", "server", "async" ]

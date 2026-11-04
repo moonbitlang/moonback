@@ -1,9 +1,17 @@
 import {
+  "moonbitlang/core/async/io",
   "moonbitlang/core/int",
-  "moonbitlang/async",
+  "moonbitlang/core/async",
   "moonbitlang/moonback",
 }
 
 supported_targets = "native"
 
 pkgtype(kind: "executable")
+
+options(
+  "allow-experimental-packages": [
+    "moonbitlang/core/async/io",
+    "moonbitlang/core/async",
+  ],
+)

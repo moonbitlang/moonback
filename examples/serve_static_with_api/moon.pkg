@@ -1,6 +1,6 @@
 import {
-  "moonbitlang/async",
-  "moonbitlang/async/stdio",
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/stdio",
   "moonbitlang/moonback",
   "moonbitlang/moonback/middlewares/unstable_static",
   "moonbitlang/moonback/middlewares/unstable_logreq",
@@ -9,3 +9,10 @@ import {
 supported_targets = "native"
 
 pkgtype(kind: "executable")
+
+options(
+  "allow-experimental-packages": [
+    "moonbitlang/core/async",
+    "moonbitlang/core/async/stdio",
+  ],
+)

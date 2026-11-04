@@ -2,12 +2,12 @@
 package "moonbitlang/moonback/middlewares/unstable_logreq"
 
 import {
-  "moonbitlang/async/io",
+  "moonbitlang/core/async/io",
   "moonbitlang/moonback",
 }
 
 // Values
-pub fn new(&@io.Writer) -> @moonback.Middleware
+pub fn new(&@io.BinaryWriter) -> @moonback.Middleware
 
 // Errors
 

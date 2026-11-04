@@ -14,11 +14,13 @@ explicitly experimental.
 
 ## Install
 
+Use a MoonBit toolchain that includes `moonbitlang/core/async`. Async support
+is provided by the standard library and needs no separate module dependency.
+
 Add MoonBack to your `moon.mod`:
 
 ```moonbit
 import {
-  "moonbitlang/async@0.22.5",
   "moonbitlang/moonback@0.8.9",
 }
 

@@ -77,7 +77,7 @@ pub async fn Responder::send_json(
       ..iter_optional_to_headers(headers),
     ],
   )
-  .write(json.stringify(indent?))
+  .write(@utf8.encode(json.stringify(indent?)))
 }
 
 ///|
@@ -96,7 +96,7 @@ pub async fn Responder::send_text(
       ..iter_optional_to_headers(headers),
     ],
   )
-  .write(text)
+  .write(@utf8.encode(text))
 }
 
 ///|

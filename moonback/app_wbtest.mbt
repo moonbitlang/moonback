@@ -23,13 +23,23 @@ suberror UnusableReuseTimeout
 suberror HandlerFailure
 
 ///|
-extend TrackedServerConnection with @io.Writer::{write_once}
+extend TrackedServerConnection with @io.BinaryWriter::{write}
 
 ///|
-struct NoopWriteFlusher {}
+struct NoopWriteFlusher {
+  controller : @io.BinaryWriterController
+}
 
 ///|
-impl @io.Writer for NoopWriteFlusher with fn write_once(
+impl @io.BinaryWriter for NoopWriteFlusher
+
+///|
+impl @io.BinaryWriterImpl for NoopWriteFlusher with fn get_controller(self) {
+  self.controller
+}
+
+///|
+impl @io.BinaryWriterImpl for NoopWriteFlusher with fn raw_write_impl(
   _self,
   _buf,
   offset~,
@@ -50,7 +60,7 @@ impl WriteFlusher for NoopWriteFlusher
 ///|
 async fn run_with_fake_responder(app : App) -> Array[Int32] {
   let statuses = []
-  let writer = NoopWriteFlusher::{ }
+  let writer = NoopWriteFlusher::{ controller: @io.BinaryWriterController(), }
   @async.with_task_group(group => {
     let req : Request = {
       ctx: Context::new(app, Mock),
@@ -135,7 +145,7 @@ async test "handler reader error is not treated as tracked disconnect" {
   with_tracked_server_connection(conn => {
     conn.notify_client_disconnected()
     @async.with_task_group(group => {
-      let raw_req : @http.Request = { meth: Get, path: "/", headers: {}, }
+      let raw_req : @http.RequestHeader = { meth: Get, path: "/", headers: {}, }
       let req : Request = {
         ctx: Context::new(
           app,
@@ -148,7 +158,9 @@ async test "handler reader error is not treated as tracked disconnect" {
         params: {},
         body: { group, state: Unbuffered, },
       }
-      let writer = NoopWriteFlusher::{ }
+      let writer = NoopWriteFlusher::{
+        controller: @io.BinaryWriterController(),
+      }
       try
         app.handle_request(req, Responder((_status, _headers) => writer))
       catch {
@@ -167,7 +179,7 @@ async test "tracked connection does not treat long response body as client disco
     let mut closed = false
     let _unsubscribe = conn.on_close(() => closed = true)
     conn.send_response(200, "OK", extra_headers={ "Content-Length": "1" })
-    try conn.write_once(b"too long", offset=0, len=8) catch {
+    try conn.write(b"too long") catch {
       @http.IncorrectBodyLength => ()
       err => raise err
     } noraise {
@@ -185,7 +197,7 @@ async test "tracked connection does not treat short response body as client disc
     let mut closed = false
     let _unsubscribe = conn.on_close(() => closed = true)
     conn.send_response(200, "OK", extra_headers={ "Content-Length": "2" })
-    conn.write_once(b"x", offset=0, len=1) |> ignore
+    conn.write(b"x")
     try conn.end_response() catch {
       @http.IncorrectBodyLength => ()
       err => raise err
@@ -205,7 +217,7 @@ async test "serve stops reusing connection after handler makes connection unusab
     Module(ctx => {
       ctx.get("/bad", (_req, res) => {
         let writer = res.respond(status=200, headers={ "Content-Length": "1" })
-        try writer.write("too long") catch {
+        try writer.write(b"too long") catch {
           @http.IncorrectBodyLength => ()
           err => raise err
         } noraise {
@@ -228,17 +240,21 @@ async test "serve stops reusing connection after handler makes connection unusab
     )
     defer conn.close()
     conn.write(
-      "GET /bad HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nConnection: keep-alive\r\n\r\n",
+      @utf8.encode(
+        "GET /bad HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nConnection: keep-alive\r\n\r\n",
+      ),
     )
     conn.write(
-      "GET /second HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nConnection: close\r\n\r\n",
+      @utf8.encode(
+        "GET /second HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nConnection: close\r\n\r\n",
+      ),
     )
     @async.with_timeout(
       1000,
       () => ignore(conn.read_all()),
       error=UnusableReuseTimeout,
     ) catch {
-      @io.ReaderClosed | @os_error.OSError(_) => ()
+      @io.ReaderClosed | @os_error.OsError(_, ..) => ()
       err => raise err
     }
     assert_true(!second_handled)
@@ -256,7 +272,7 @@ async test "serve_on_connection propagates response state errors" {
     Module(ctx => {
       ctx.get("/bad", (_req, res) => {
         let writer = res.respond(status=200, headers={ "Content-Length": "1" })
-        writer.write("too long")
+        writer.write(b"too long")
       })
     }),
   )
@@ -271,12 +287,14 @@ async test "serve_on_connection propagates response state errors" {
     )
     defer client.close()
     let (conn, peer_addr) = accept_task.wait()
-    let no_protect = @async.CondVar::Cond()
+    let no_protect = @async.Cond()
     let task = group.spawn(allow_failure=true, () => {
       app.serve_on_connection(conn, peer_addr, no_protect~)
     })
     client.write(
-      "GET /bad HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nConnection: close\r\n\r\n",
+      @utf8.encode(
+        "GET /bad HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nConnection: close\r\n\r\n",
+      ),
     )
     try task.wait() catch {
       @http.IncorrectBodyLength => ()
@@ -309,7 +327,9 @@ async test "serve cancels idle keep-alive connections" {
     )
     defer conn.close()
     conn.write(
-      "GET / HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nConnection: keep-alive\r\n\r\n",
+      @utf8.encode(
+        "GET / HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nConnection: keep-alive\r\n\r\n",
+      ),
     )
     @async.with_timeout(
       500,
@@ -333,7 +353,6 @@ async test "serve cancels idle keep-alive connections" {
 }
 
 ///|
-#skip("unskip this test when async's bug fixed")
 async test "serve cancels handler when content-length body is truncated" {
   let mut cancelled = false
   let app = App(
@@ -356,7 +375,9 @@ async test "serve cancels handler when content-length body is truncated" {
       port=server.addr.port(),
     )
     conn.write(
-      "POST /upload HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nContent-Length: 12\r\n\r\nhello",
+      @utf8.encode(
+        "POST /upload HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nContent-Length: 12\r\n\r\nhello",
+      ),
     )
     conn.close()
     @async.with_timeout(
@@ -398,7 +419,9 @@ async test "serve skips end_response after connection closes before response sta
       port=server.addr.port(),
     )
     conn.write(
-      "POST /upload HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello",
+      @utf8.encode(
+        "POST /upload HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello",
+      ),
     )
     conn.close()
     @async.with_timeout(
@@ -441,7 +464,9 @@ async test "serve cancels handler when chunked request body disconnects" {
       port=server.addr.port(),
     )
     conn.write(
-      "POST /upload HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello",
+      @utf8.encode(
+        "POST /upload HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello",
+      ),
     )
     conn.close()
     @async.with_timeout(
@@ -481,18 +506,20 @@ async test "serve does not treat complete body eof as disconnect" {
     )
     defer conn.close()
     conn.write(
-      "POST /upload HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello",
+      @utf8.encode(
+        "POST /upload HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello",
+      ),
     )
     let header = @async.with_timeout(
       1000,
-      () => conn.read_until("\r\n\r\n"),
+      () => conn.read_until(b"\r\n\r\n"),
       error=BodyResponseTimeout,
     )
     guard header is Some(header) else { fail("expected response header") }
-    assert_true(header.contains("200 OK"))
+    assert_true(@utf8.decode(header).contains("200 OK"))
     guard @async.with_timeout(
         1000,
-        () => conn.read_until("hello"),
+        () => conn.read_until(b"hello"),
         error=BodyResponseTimeout,
       )
       is Some(_) else {
@@ -526,18 +553,20 @@ async test "serve does not treat empty request body as disconnect" {
     )
     defer conn.close()
     conn.write(
-      "GET /empty HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nConnection: close\r\n\r\n",
+      @utf8.encode(
+        "GET /empty HTTP/1.1\r\nHost: 127.0.0.1:\{server.addr.port()}\r\nConnection: close\r\n\r\n",
+      ),
     )
     let header = @async.with_timeout(
       1000,
-      () => conn.read_until("\r\n\r\n"),
+      () => conn.read_until(b"\r\n\r\n"),
       error=BodyResponseTimeout,
     )
     guard header is Some(header) else { fail("expected response header") }
-    assert_true(header.contains("200 OK"))
+    assert_true(@utf8.decode(header).contains("200 OK"))
     guard @async.with_timeout(
         1000,
-        () => conn.read_until("empty=0"),
+        () => conn.read_until(b"empty=0"),
         error=BodyResponseTimeout,
       )
       is Some(_) else {
@@ -549,4 +578,31 @@ async test "serve does not treat empty request body as disconnect" {
       err => raise err
     }
   })
+}
+
+///|
+async test "tracked connection discards buffered body before the next request" {
+  let server = listen(port=0)
+  defer server.close()
+  let client = @socket.Tcp::connect_to_host(
+    "127.0.0.1",
+    port=server.addr.port(),
+  )
+  defer client.close()
+  let (conn, _) = server.accept()
+  defer conn.close()
+  let tracked = TrackedServerConnection::new(conn)
+  client.write(
+    b"POST /first HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\n\r\nhelloPOST /second HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\n\r\nworld",
+  )
+  let first = tracked.read_request()
+  @test.assert_eq(first.path, "/first")
+  let reader : &@io.BinaryReader = tracked
+  @test.assert_eq(reader.peek_at_least(5).to_owned(), b"hello")
+  @test.assert_eq(reader.read_exactly(1), b"h")
+  let second = tracked.read_request()
+  @test.assert_eq(second.path, "/second")
+  @test.assert_eq(reader.read_all(), b"world")
+  assert_false(tracked.is_client_disconnected())
+  assert_false(tracked.is_unusable())
 }

@@ -14,15 +14,17 @@ async fn send_request(
     }),
   )
   defer app.close()
+  let mut result = None
   @async.with_task_group(group => {
     let server = @moonback.listen(port=0)
     let task = group.spawn(() => app.serve(server))
-    let (response, body) = @http.get(
+    let (response, body) = @http.get_text(
       "http://127.0.0.1:\{server.addr.port()}\{path}",
     )
     task.cancel()
-    (response.code, response.headers.get("content-type"), body.text())
+    result = Some((response.code, response.headers.get("content-type"), body))
   })
+  result.unwrap()
 }
 
 ///|
@@ -100,7 +102,7 @@ async test "static middleware keeps next response when next is not 404" {
     extra_routes=Module(ctx => {
       ctx.get("/dashboard", (_req, res) => {
         let writer = res.respond(status=200)
-        writer.write("from route")
+        writer.write(b"from route")
       })
     }),
   )
@@ -124,7 +126,7 @@ async test "static middleware uses history fallback when next returns 404" {
     extra_routes=Module(ctx => {
       ctx.get("/dashboard", (_req, res) => {
         let writer = res.respond(status=404)
-        writer.write("route 404")
+        writer.write(b"route 404")
       })
     }),
   )

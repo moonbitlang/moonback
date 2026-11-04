@@ -41,7 +41,7 @@ pub fn cancel_on_shutdown() -> Middleware {
               Normal(_, conn, _) => conn.notify_unusable()
               Mock | Upgraded(_, _) => ()
             }
-            group.return_immediately(())
+            group.return_immediately()
           },
           no_wait=true,
         )

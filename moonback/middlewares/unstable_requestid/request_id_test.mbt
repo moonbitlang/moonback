@@ -16,17 +16,19 @@ async fn run_handler(
     config~,
   )
   defer app.close()
+  let mut result = None
   @async.with_task_group(group => {
     let server = @moonback.listen(port=0)
     let task = group.spawn(() => app.serve(server))
     let port = server.addr.port()
-    let (response, _body) = @http.get(
+    let (response, _body) = @http.get_binary(
       "http://127.0.0.1:\{port}/",
       headers=request_headers,
     )
     task.cancel()
-    (seen_request_id, response.headers.get("x-request-id"))
+    result = Some((seen_request_id, response.headers.get("x-request-id")))
   })
+  result.unwrap()
 }
 
 ///|

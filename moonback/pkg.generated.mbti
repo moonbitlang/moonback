@@ -2,10 +2,11 @@
 package "moonbitlang/moonback"
 
 import {
-  "moonbitlang/async/http",
-  "moonbitlang/async/io",
-  "moonbitlang/async/socket",
-  "moonbitlang/async/websocket",
+  "moonbitlang/core/async/http",
+  "moonbitlang/core/async/io",
+  "moonbitlang/core/async/socket",
+  "moonbitlang/core/async/websocket",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -148,14 +149,14 @@ pub fn Request::query(Self) -> QueryParams
 
 type RequestBody
 pub async fn RequestBody::binary(Self) -> Bytes
-pub async fn RequestBody::json(Self) -> Json
-pub fn RequestBody::reader(Self, no_buffer? : Bool) -> &@io.Reader raise
+pub async fn RequestBody::json(Self) -> @json.Json
+pub fn RequestBody::reader(Self, no_buffer? : Bool) -> &@io.BinaryReader raise
 pub async fn RequestBody::text(Self) -> String
 
 pub(all) struct Responder(async (Int32, Headers) -> &WriteFlusher)
 pub async fn Responder::respond(Self, status? : Int32, headers? : &ToHeaders) -> &WriteFlusher
 pub async fn Responder::send_html(Self, Html, status? : Int32, headers? : &ToHeaders) -> Unit
-pub async fn Responder::send_json(Self, Json, status? : Int32, headers? : &ToHeaders, indent? : Int32) -> Unit
+pub async fn Responder::send_json(Self, @json.Json, status? : Int32, headers? : &ToHeaders, indent? : Int32) -> Unit
 pub async fn Responder::send_text(Self, String, status? : Int32, headers? : &ToHeaders) -> Unit
 pub async fn Responder::send_void(Self, status? : Int32, headers? : &ToHeaders) -> Unit
 pub async fn Responder::upgrade(Self, Request) -> @websocket.Conn
@@ -191,7 +192,7 @@ pub trait ToHeaders {
 pub impl ToHeaders for Array[(String, String)]
 pub impl ToHeaders for Map[String, String]
 
-pub(open) trait WriteFlusher : @io.Writer + Flusher {
+pub(open) trait WriteFlusher : @io.BinaryWriter + Flusher {
 }
 
 pub trait WriteToHtmlBuilder {

@@ -95,8 +95,8 @@ fn guess_content_type(path : String) -> String {
 ///|
 async fn stat_path(path : String) -> PathStatus {
   try @fs.kind(path) catch {
-    @os_error.OSError(_) as err if err.is_ENOENT() => Missing
-    @os_error.OSError(_) as err if err.is_EACCES() => Forbidden
+    @os_error.OsError(NotFound, ..) => Missing
+    @os_error.OsError(AccessDenied, ..) => Forbidden
     err => raise err
   } noraise {
     kind => Kind(kind)
@@ -166,8 +166,8 @@ async fn send_file(
       writer.write_reader(file)
     }
   } catch {
-    @os_error.OSError(_) as err if err.is_ENOENT() => on_missing(req, res)
-    @os_error.OSError(_) as err if err.is_EACCES() => res.send_void(status=403)
+    @os_error.OsError(NotFound, ..) => on_missing(req, res)
+    @os_error.OsError(AccessDenied, ..) => res.send_void(status=403)
     _ => res.send_void(status=500)
   }
 }

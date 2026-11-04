@@ -1,12 +1,19 @@
 import {
   "moonbitlang/moonback",
   "moonbitlang/core/env",
-  "moonbitlang/async/http",
-  "moonbitlang/async/io",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/async/io",
 }
 
 import {
-  "moonbitlang/async",
-  "moonbitlang/async/http",
-  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/http",
 } for "test"
+
+options(
+  "allow-experimental-packages": [
+    "moonbitlang/core/async/http",
+    "moonbitlang/core/async/io",
+    "moonbitlang/core/async",
+  ],
+)

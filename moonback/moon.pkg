@@ -1,15 +1,27 @@
 import {
   "moonbitlang/core/string",
+  "moonbitlang/core/json",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/immut/sorted_map" @immut/sorted_map,
-  "moonbitlang/async",
-  "moonbitlang/async/http",
-  "moonbitlang/async/websocket",
-  "moonbitlang/async/io",
-  "moonbitlang/async/os_error",
-  "moonbitlang/async/socket",
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/http",
+  "moonbitlang/core/async/websocket",
+  "moonbitlang/core/async/io",
+  "moonbitlang/core/async/os_error",
+  "moonbitlang/core/async/socket",
 }
 
 import {
   "moonbitlang/core/test",
 } for "wbtest"
+
+options(
+  "allow-experimental-packages": [
+    "moonbitlang/core/async",
+    "moonbitlang/core/async/http",
+    "moonbitlang/core/async/websocket",
+    "moonbitlang/core/async/io",
+    "moonbitlang/core/async/os_error",
+    "moonbitlang/core/async/socket",
+  ],
+)

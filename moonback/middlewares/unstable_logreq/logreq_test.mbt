@@ -1,10 +1,24 @@
 ///|
 struct CaptureWriter {
   log : StringBuilder
+  controller : @io.BinaryWriterController
 }
 
 ///|
-impl @io.Writer for CaptureWriter with fn write_once(self, buf, offset~, len~) {
+impl @io.BinaryWriter for CaptureWriter
+
+///|
+impl @io.BinaryWriterImpl for CaptureWriter with fn get_controller(self) {
+  self.controller
+}
+
+///|
+impl @io.BinaryWriterImpl for CaptureWriter with fn raw_write_impl(
+  self,
+  buf,
+  offset~,
+  len~,
+) {
   self.log.write_string(@utf8.decode(buf[offset:offset + len]))
   len
 }
@@ -15,7 +29,10 @@ async fn send_request(
   path : String,
   status~ : Int32 = 204,
 ) -> String {
-  let captured = { log: StringBuilder(), }
+  let captured = {
+    log: StringBuilder(),
+    controller: @io.BinaryWriterController(),
+  }
   let app = @moonback.App(
     Module(ctx => {
       ctx.add_middleware(@unstable_logreq.new(captured))
@@ -29,16 +46,16 @@ async fn send_request(
     let url = "http://127.0.0.1:\{server.addr.port()}\{path}"
     match meth {
       Get => {
-        let _ = @http.get(url)
+        let _ = @http.get_binary(url)
       }
       Post => {
-        let _ = @http.post(url, "")
+        let _ = @http.post_binary(url, b"")
       }
       _ => fail("unsupported test method")
     }
     task.cancel()
-    captured.log.to_string()
   })
+  captured.log.to_string()
 }
 
 ///|

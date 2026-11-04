@@ -10,6 +10,8 @@ priv struct CloseHandler {
 ///|
 priv struct TrackedServerConnection {
   conn : @http.ServerConnection
+  mut reader_controller : @io.BinaryReaderController
+  writer_controller : @io.BinaryWriterController
   mut client_disconnected : Bool
   mut unusable : Bool
   mut next_close_handler_id : Int32
@@ -22,6 +24,8 @@ fn TrackedServerConnection::new(
 ) -> TrackedServerConnection {
   {
     conn,
+    reader_controller: @io.BinaryReaderController(),
+    writer_controller: @io.BinaryWriterController(),
     client_disconnected: false,
     unusable: false,
     next_close_handler_id: 0,
@@ -87,10 +91,12 @@ fn TrackedServerConnection::notify_unusable(
 ///|
 async fn TrackedServerConnection::read_request(
   self : TrackedServerConnection,
-) -> @http.Request {
+) -> @http.RequestHeader {
+  // Discard any unread body bytes buffered by the previous request.
+  self.reader_controller = @io.BinaryReaderController()
   errdefer self.notify_unusable()
   self.conn.read_request() catch {
-    @io.ReaderClosed | @os_error.OSError(_) => {
+    @io.ReaderClosed | @os_error.OsError(_, ..) => {
       self.notify_client_disconnected()
       raise ClientDisconnected
     }
@@ -108,7 +114,7 @@ async fn TrackedServerConnection::send_response(
 ) -> Unit {
   errdefer self.notify_unusable()
   self.conn.send_response(code, reason, extra_headers~, cookies~) catch {
-    @os_error.OSError(_) => {
+    @os_error.OsError(_, ..) => {
       self.notify_client_disconnected()
       raise ClientDisconnected
     }
@@ -122,7 +128,7 @@ async fn TrackedServerConnection::end_response(
 ) -> Unit {
   errdefer self.notify_unusable()
   self.conn.end_response() catch {
-    @os_error.OSError(_) => {
+    @os_error.OsError(_, ..) => {
       self.notify_client_disconnected()
       raise ClientDisconnected
     }
@@ -133,11 +139,11 @@ async fn TrackedServerConnection::end_response(
 ///|
 async fn TrackedServerConnection::upgrade(
   self : TrackedServerConnection,
-  req : @http.Request,
+  req : @http.RequestHeader,
 ) -> @websocket.Conn {
   errdefer self.notify_unusable()
   @websocket.from_http_server(req, self.conn) catch {
-    @os_error.OSError(_) => {
+    @os_error.OsError(_, ..) => {
       self.notify_client_disconnected()
       raise ClientDisconnected
     }
@@ -149,7 +155,7 @@ async fn TrackedServerConnection::upgrade(
 async fn TrackedServerConnection::flush(self : TrackedServerConnection) -> Unit {
   errdefer self.notify_unusable()
   self.conn.flush() catch {
-    @os_error.OSError(_) => {
+    @os_error.OsError(_, ..) => {
       self.notify_client_disconnected()
       raise ClientDisconnected
     }
@@ -158,20 +164,25 @@ async fn TrackedServerConnection::flush(self : TrackedServerConnection) -> Unit 
 }
 
 ///|
-impl @io.Reader for TrackedServerConnection with fn _get_internal_buffer(self) {
-  @io.Reader::_get_internal_buffer(self.conn)
+impl @io.BinaryReader for TrackedServerConnection
+
+///|
+impl @io.BinaryReaderImpl for TrackedServerConnection with fn get_controller(
+  self,
+) {
+  self.reader_controller
 }
 
 ///|
-impl @io.Reader for TrackedServerConnection with fn _direct_read(
+impl @io.BinaryReaderImpl for TrackedServerConnection with fn raw_read_impl(
   self,
   buf,
   offset~,
   max_len~,
 ) {
   errdefer self.notify_unusable()
-  @io.Reader::_direct_read(self.conn, buf, offset~, max_len~) catch {
-    @io.ReaderClosed | @os_error.OSError(_) => {
+  self.conn.read_into(buf, offset~, max_len~) catch {
+    @io.ReaderClosed | @os_error.OsError(_, ..) => {
       self.notify_client_disconnected()
       raise ClientDisconnected
     }
@@ -180,20 +191,31 @@ impl @io.Reader for TrackedServerConnection with fn _direct_read(
 }
 
 ///|
-impl @io.Writer for TrackedServerConnection with fn write_once(
+impl @io.BinaryWriter for TrackedServerConnection
+
+///|
+impl @io.BinaryWriterImpl for TrackedServerConnection with fn get_controller(
+  self,
+) {
+  self.writer_controller
+}
+
+///|
+impl @io.BinaryWriterImpl for TrackedServerConnection with fn raw_write_impl(
   self,
   buf,
   offset~,
   len~,
 ) {
   errdefer self.notify_unusable()
-  self.conn.write_once(buf, offset~, len~) catch {
-    @os_error.OSError(_) => {
+  self.conn.write(buf[offset:offset + len]) catch {
+    @os_error.OsError(_, ..) => {
       self.notify_client_disconnected()
       raise ClientDisconnected
     }
     err => raise err
   }
+  len
 }
 
 ///|

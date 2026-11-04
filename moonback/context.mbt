@@ -10,7 +10,7 @@ struct Context {
 #warnings("-unused_field")
 priv enum ConnectionInfo {
   Mock
-  Normal(@http.Request, TrackedServerConnection, @socket.Addr)
+  Normal(@http.RequestHeader, TrackedServerConnection, @socket.Addr)
   Upgraded(@websocket.Conn, @socket.Addr)
 }
 

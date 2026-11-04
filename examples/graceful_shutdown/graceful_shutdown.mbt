@@ -15,7 +15,8 @@ async fn main {
     ctx.get("/", (_req, res) => {
       println("Handling request...")
       let w = res.respond(status=200, headers={ "Content-Type": "text/html" })
-      w.write(
+      let text = @io.Utf8Writer(w)
+      text.write(
         (
           #|<html>
           #|<body>
@@ -31,11 +32,11 @@ async fn main {
       )
       for i in 0..<20 {
         println("Writing data... \{i}")
-        w.write("\{i}\n")
+        text.write("\{i}\n")
         w.flush()
         @async.sleep(250)
       }
-      w.write(
+      text.write(
         (
           #|</pre>
           #|</body>

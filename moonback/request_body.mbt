@@ -1,27 +1,27 @@
 ///|
 /// Represents the body of an HTTP request, which can be read as a stream or buffered in memory.
 struct RequestBody {
-  group : @async.TaskGroup[Unit]
+  group : @async.TaskGroup
   mut state : RequestBodyState
 }
 
 ///|
 priv enum RequestBodyState {
-  ReadyStream(&@io.Reader)
+  ReadyStream(&@io.BinaryReader)
   Unbuffered
-  Buffered(@async.Task[&@io.Data])
+  Buffered(@async.Task[Bytes])
 }
 
 ///|
 fn RequestBody::from_ready_stream(
-  reader : &@io.Reader,
-  group~ : @async.TaskGroup[Unit],
+  reader : &@io.BinaryReader,
+  group~ : @async.TaskGroup,
 ) -> RequestBody {
   { group, state: ReadyStream(reader), }
 }
 
 ///|
-async fn RequestBody::data(self : RequestBody) -> &@io.Data {
+async fn RequestBody::data(self : RequestBody) -> Bytes {
   match self.state {
     ReadyStream(reader) => {
       let task = self.group.spawn(() => reader.read_all())
@@ -42,7 +42,7 @@ async fn RequestBody::data(self : RequestBody) -> &@io.Data {
 pub fn RequestBody::reader(
   self : RequestBody,
   no_buffer~ : Bool = true,
-) -> &@io.Reader raise {
+) -> &@io.BinaryReader raise {
   if !no_buffer {
     fail(
       "no_buffer=false is not supported for RequestBody::reader, as buffering is not implemented yet",
@@ -68,7 +68,7 @@ pub fn RequestBody::reader(
 /// This buffers the entire body in memory, so it should only be used for small
 /// request bodies or when the content length is known to be reasonable.
 pub async fn RequestBody::binary(self : RequestBody) -> Bytes {
-  self.data().binary()
+  self.data()
 }
 
 ///|
@@ -77,7 +77,7 @@ pub async fn RequestBody::binary(self : RequestBody) -> Bytes {
 /// This buffers the entire body in memory, so it should only be used for small
 /// request bodies or when the content length is known to be reasonable.
 pub async fn RequestBody::text(self : RequestBody) -> String {
-  self.data().text()
+  @utf8.decode(self.data())
 }
 
 ///|
@@ -86,5 +86,5 @@ pub async fn RequestBody::text(self : RequestBody) -> String {
 /// This buffers the entire body in memory, so it should only be used for small
 /// request bodies or when the content length is known to be reasonable.
 pub async fn RequestBody::json(self : RequestBody) -> Json {
-  self.data().json()
+  @json.parse(self.text())
 }

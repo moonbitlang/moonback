@@ -4,7 +4,7 @@ async fn request_assets(
   path : String,
   meth~ : @http.RequestMethod = Get,
   routes~ : @moonback.Module = Module(_ctx => ()),
-) -> (@http.Response, Bytes) {
+) -> (@http.ResponseHeader, Bytes) {
   let app = @moonback.App(
     Module(ctx => {
       ctx.add_middleware(middleware)
@@ -12,18 +12,19 @@ async fn request_assets(
     }),
   )
   defer app.close()
+  let mut result = None
   @async.with_task_group(group => {
     let listener = @moonback.listen(port=0)
     let task = group.spawn(() => app.serve(listener))
     defer task.cancel()
-    let (response, body) = @http.request(
-      "http://127.0.0.1:\{listener.addr.port()}\{path}",
+    let (response, body) = @http.request_binary(
       meth,
-      {},
+      "http://127.0.0.1:\{listener.addr.port()}\{path}",
       b"",
     )
-    (response, body.binary())
+    result = Some((response, body))
   })
+  result.unwrap()
 }
 
 ///|

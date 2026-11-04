@@ -6,7 +6,7 @@ priv struct AppInst {
   mut close_hook : Array[() -> Unit]
   mut dependencies : @immut/sorted_map.SortedMap[Int32, TypedBox]
   mut shutdown_requested : Bool
-  mut shutdown_requested_signal : @async.CondVar
+  mut shutdown_requested_signal : @async.Cond
 }
 
 ///|
@@ -24,7 +24,7 @@ async fn AppInst::init(root : Module, config : Config) -> AppInst {
     close_hook: [],
     dependencies: @immut/sorted_map.SortedMap::new(),
     shutdown_requested: false,
-    shutdown_requested_signal: @async.CondVar::Cond(),
+    shutdown_requested_signal: @async.Cond(),
   }
   (root.0)({ inst, })
   inst
@@ -112,7 +112,7 @@ async fn App::serve_on_connection(
   self : App,
   conn : @http.ServerConnection,
   peer_addr : @socket.Addr,
-  no_protect~ : @async.CondVar,
+  no_protect~ : @async.Cond,
 ) -> Unit {
   let tracked_conn = TrackedServerConnection::new(conn)
   let mut reusable = true
@@ -132,7 +132,7 @@ async fn App::serve_on_connection(
         }
         group.spawn_bg(no_wait=true, () => {
           no_protect.wait()
-          group.return_immediately(())
+          group.return_immediately()
         })
         let task = group.spawn(() => {
           self.handle_request(req, Responder::from_conn(tracked_conn))
@@ -176,8 +176,8 @@ pub async fn App::serve(
   take_ownership~ : Bool = true,
 ) -> Unit {
   guard !self.inst.shutdown_requested else { panic() }
-  let no_protect = @async.CondVar::Cond()
-  let connection_finished = @async.CondVar::Cond()
+  let no_protect = @async.Cond()
+  let connection_finished = @async.Cond()
   let mut active_connections = 0
   @async.with_task_group(group => {
     errdefer {

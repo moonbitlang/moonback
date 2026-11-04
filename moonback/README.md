@@ -8,7 +8,7 @@ module-scoped dependency injection.
 
 ## Features
 
-- Async HTTP server integration through `moonbitlang/async`
+- Async HTTP server integration through `moonbitlang/core/async`
 - Module-based app composition with `Module` and `ModuleContext`
 - Route registration for `GET`, `POST`, and arbitrary HTTP methods
 - Middleware chaining
@@ -22,11 +22,21 @@ module-scoped dependency injection.
 
 ## Installation
 
+Use a MoonBit toolchain that includes `moonbitlang/core/async`. Async support
+is provided by the standard library and needs no separate module dependency.
+The core async packages are experimental; acknowledge each directly imported
+package in `moon.pkg`:
+
+```moonbit
+options(
+  "allow-experimental-packages": ["moonbitlang/core/async"],
+)
+```
+
 Add MoonBack to your `moon.mod`:
 
 ```moonbit
 import {
-  "moonbitlang/async@0.22.5",
   "moonbitlang/moonback@0.8.9",
 }
 ```
@@ -130,7 +140,7 @@ ctx.add_route(@http.Put, "/posts/:id", update_post)
 ```
 
 When using `add_route` from your own package, import
-`moonbitlang/async/http` and refer to methods as `@http.Get`, `@http.Put`,
+`moonbitlang/core/async/http` and refer to methods as `@http.Get`, `@http.Put`,
 and so on.
 
 Supported helpers:
@@ -228,11 +238,14 @@ For streaming responses, use `respond`:
 ```moonbit
 ctx.get("/stream", (_req, res) => {
   let w = res.respond(status=200, headers={ "Content-Type": "text/plain" })
-  w.write("first line\n")
+  w.write(b"first line\n")
   w.flush()
-  w.write("second line\n")
+  w.write(b"second line\n")
 })
 ```
+
+Response writers use `@io.BinaryWriter`: write bytes directly, or wrap the
+writer in `@io.Utf8Writer` from `moonbitlang/core/async/io` to write strings.
 
 ## WebSocket
 
@@ -244,9 +257,13 @@ Add the WebSocket package to your `moon.pkg` when you need to handle messages:
 
 ```moonbit
 import {
-  "moonbitlang/async/websocket",
+  "moonbitlang/core/async/websocket",
   "moonbitlang/moonback",
 }
+
+options(
+  "allow-experimental-packages": ["moonbitlang/core/async/websocket"],
+)
 ```
 
 Register a WebSocket route like any other route:
@@ -264,11 +281,11 @@ async fn serve_websocket(
       let msg = ws.recv()
       match msg.kind {
         Text => {
-          let text = msg.read_all().text()
+          let text = msg.text.read_all()
           ws.send_text("echo: \{text}")
         }
         Binary => {
-          let data = msg.read_all().binary()
+          let data = msg.read_all()
           ws.send_binary(data)
         }
       }
@@ -325,7 +342,7 @@ ctx.get(
       headers={ "Content-Type": "text/event-stream" },
     )
     for ;; {
-      w.write("data: ping\n\n")
+      w.write(b"data: ping\n\n")
       w.flush()
       @async.sleep(1000)
     }
@@ -492,11 +509,10 @@ closing the app, as in the `defer app.close()` examples above.
 
 ## Cancellation and graceful shutdown
 
-MoonBack uses `moonbitlang/async` 0.22.5. Cancellation is no longer an ordinary
-error: it bypasses `catch` blocks and still runs `defer` and `errdefer`. Put
-resource cleanup in those blocks instead of catch-all error handlers. Async
-cleanup that must complete after cancellation needs `@async.protect_from_cancel`,
-ideally with a bounded timeout.
+MoonBack uses `moonbitlang/core/async`. Cancellation bypasses `catch` blocks
+and still runs `defer` and `errdefer`. Put resource cleanup in those blocks
+instead of catch-all error handlers. Async cleanup that must complete after
+cancellation needs `@async.protect_from_cancel`, ideally with a bounded timeout.
 
 Cancelling `app.serve(listener)` stops accepting connections and closes the
 listener unless `take_ownership=false`. In-flight requests, including WebSocket

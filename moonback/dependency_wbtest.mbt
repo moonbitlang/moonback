@@ -75,7 +75,7 @@ async test "handlers use dependencies captured during module initialization" {
     let server = listen(port=0)
     let task = group.spawn(() => app.serve(server))
     let port = server.addr.port()
-    let (response, _) = @http.get("http://127.0.0.1:\{port}/")
+    let (response, _) = @http.get_binary("http://127.0.0.1:\{port}/")
     task.cancel()
     @test.assert_eq(response.code, 204)
   })

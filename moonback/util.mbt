@@ -1,6 +1,6 @@
 ///|
 /// A writer that also supports flushing buffered output.
-pub(open) trait WriteFlusher: @io.Writer + Flusher {}
+pub(open) trait WriteFlusher: @io.BinaryWriter + Flusher {}
 
 ///|
 /// Flushes buffered output to the underlying transport.
@@ -9,7 +9,7 @@ pub(open) trait Flusher {
 }
 
 ///|
-pub extend &WriteFlusher with @io.Writer::{write_once, write, write_reader}
+pub extend &WriteFlusher with @io.BinaryWriter::{write, write_reader}
 
 ///|
 pub extend &WriteFlusher with Flusher::{flush}

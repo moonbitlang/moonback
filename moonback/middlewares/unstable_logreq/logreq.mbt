@@ -1,20 +1,5 @@
 ///|
-fn method_name(meth : @http.RequestMethod) -> String {
-  match meth {
-    Get => "GET"
-    Head => "HEAD"
-    Post => "POST"
-    Put => "PUT"
-    Delete => "DELETE"
-    Connect => "CONNECT"
-    Options => "OPTIONS"
-    Trace => "TRACE"
-    Patch => "PATCH"
-  }
-}
-
-///|
-pub fn new(logger : &@io.Writer) -> @moonback.Middleware {
+pub fn new(logger : &@io.BinaryWriter) -> @moonback.Middleware {
   Middleware(next => {
     (req, res) => {
       let start = @env.now()
@@ -25,7 +10,9 @@ pub fn new(logger : &@io.Writer) -> @moonback.Middleware {
       })
       let elapsed = @env.now() - start
       logger.write(
-        "[\{start}] \{method_name(req.meth)} \{req.path} -> \{status} (\{elapsed}ms)\n",
+        @utf8.encode(
+          "[\{start}] \{req.meth.to_string()} \{req.path} -> \{status} (\{elapsed}ms)\n",
+        ),
       )
     }
   })
