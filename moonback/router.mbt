@@ -11,10 +11,16 @@ pub suberror RouterError {
 
 ///|
 priv struct Route {
-  mut get : Handler?
-  mut post : Handler?
-  other : Array[(@http.RequestMethod, Handler)]
-  mut fallback : Handler?
+  mut get : RouteHandler?
+  mut post : RouteHandler?
+  other : Array[(@http.RequestMethod, RouteHandler)]
+  mut fallback : RouteHandler?
+}
+
+///|
+priv struct RouteHandler {
+  handler : Handler
+  template : StringView?
 }
 
 ///|
@@ -23,7 +29,10 @@ fn Route::new() -> Route {
 }
 
 ///|
-fn Route::handler_for(self : Route, meth : @http.RequestMethod) -> Handler? {
+fn Route::handler_for(
+  self : Route,
+  meth : @http.RequestMethod,
+) -> RouteHandler? {
   match meth {
     Get =>
       match self.get {
@@ -51,7 +60,7 @@ fn Route::handler_for(self : Route, meth : @http.RequestMethod) -> Handler? {
 fn Route::add_handler(
   self : Route,
   meth : @http.RequestMethod,
-  handler : Handler,
+  handler : RouteHandler,
 ) -> Unit raise RouterError {
   match meth {
     Get =>
@@ -83,7 +92,7 @@ fn Route::add_handler_with_path(
   path : StringView,
   handler : Handler,
 ) -> Unit raise RouterError {
-  self.add_handler(meth, handler) catch {
+  self.add_handler(meth, { handler, template: Some(path), }) catch {
     RouteConflict(_) => raise RouteConflict(path~)
   }
 }
@@ -95,7 +104,7 @@ fn Route::add_fallback(
 ) -> Unit raise RouterError {
   match self.fallback {
     Some(_) => raise RouteConflict(path="")
-    None => self.fallback = Some(handler)
+    None => self.fallback = Some({ handler, template: None, })
   }
 }
 
@@ -162,6 +171,7 @@ fn Router::add_fallback_route(
 ///|
 priv struct RouteResult {
   handler : Handler
+  template : StringView?
   params : Map[StringView, StringView]
 }
 
@@ -176,7 +186,7 @@ fn Router::route(
     Some((route, params)) =>
       match route.handler_for(meth) {
         None => None
-        Some(handler) => Some({ handler, params, })
+        Some({ handler, template, }) => Some({ handler, template, params, })
       }
   }
 }

@@ -180,6 +180,7 @@ Useful request APIs:
 - `req.body.binary()`
 - `req.body.json()`
 - `req.app()`
+- `req.route_template()`
 - `req.query()`
 - `req.cookie()`
 - `req.ip()`
