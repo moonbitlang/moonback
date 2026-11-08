@@ -46,6 +46,19 @@ pub fn Request::app(self : Request) -> App {
 }
 
 ///|
+/// Returns the matched route template, including all mount prefixes.
+/// Parameter names and catch-all patterns are preserved, for example
+/// `/tenants/:tenant/users/:id`.
+///
+/// The template is available before the matching app's middleware runs.
+/// Middleware around a mounted app can read its final template after `next`
+/// returns or raises. Until a route matches, including unmatched requests,
+/// this returns `None`. A matched handler's response status does not change it.
+pub fn Request::route_template(self : Request) -> StringView? {
+  self.ctx.route_template
+}
+
+///|
 /// Returns the client IP chain for this request.
 /// When `trust_proxy` is enabled, this prefers `X-Forwarded-For`.
 pub fn Request::ips(self : Request) -> ArrayView[StringView] {

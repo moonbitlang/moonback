@@ -85,8 +85,21 @@ async fn App::handle_mounted_request(
   self : App,
   req : Request,
   res : Responder,
+  mount_prefix_template : String,
   error_mode : MountErrorMode,
 ) -> Unit {
+  let previous_prefix = req.ctx.mount_prefix_template
+  defer {
+    req.ctx.mount_prefix_template = previous_prefix
+  }
+  if mount_prefix_template != "/" {
+    let prefix = if mount_prefix_template.has_prefix("/") {
+      mount_prefix_template
+    } else {
+      "/" + mount_prefix_template
+    }
+    req.ctx.mount_prefix_template = previous_prefix + prefix
+  }
   match error_mode {
     Propagate => self.inst.dispatch_request(req, res)
     Isolate => self.handle_request(req, res)
@@ -117,13 +130,19 @@ pub fn ModuleContext::mount(
     app.handle_mounted_request(
       { ..req, path: "/", params: {}, },
       res,
+      path,
       error_mode,
     )
   })
   let prefix = if path == "/" { "/" } else { path + "/" }
   self.inst.router.add_fallback_route(prefix + "*path", (req, res) => {
-    let path = mounted_request_path(req.params["path"])
-    app.handle_mounted_request({ ..req, path, params: {}, }, res, error_mode)
+    let child_path = mounted_request_path(req.params["path"])
+    app.handle_mounted_request(
+      { ..req, path: child_path, params: {}, },
+      res,
+      path,
+      error_mode,
+    )
   })
 }
 

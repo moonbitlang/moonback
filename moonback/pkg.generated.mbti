@@ -6,6 +6,7 @@ import {
   "moonbitlang/async/io",
   "moonbitlang/async/socket",
   "moonbitlang/async/websocket",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -145,17 +146,18 @@ pub fn Request::cookie(Self) -> Map[String, String]
 pub fn Request::ip(Self) -> StringView?
 pub fn Request::ips(Self) -> ArrayView[StringView]
 pub fn Request::query(Self) -> QueryParams
+pub fn Request::route_template(Self) -> StringView?
 
 type RequestBody
 pub async fn RequestBody::binary(Self) -> Bytes
-pub async fn RequestBody::json(Self) -> Json
+pub async fn RequestBody::json(Self) -> @json.Json
 pub fn RequestBody::reader(Self, no_buffer? : Bool) -> &@io.Reader raise
 pub async fn RequestBody::text(Self) -> String
 
 pub(all) struct Responder(async (Int32, Headers) -> &WriteFlusher)
 pub async fn Responder::respond(Self, status? : Int32, headers? : &ToHeaders) -> &WriteFlusher
 pub async fn Responder::send_html(Self, Html, status? : Int32, headers? : &ToHeaders) -> Unit
-pub async fn Responder::send_json(Self, Json, status? : Int32, headers? : &ToHeaders, indent? : Int32) -> Unit
+pub async fn Responder::send_json(Self, @json.Json, status? : Int32, headers? : &ToHeaders, indent? : Int32) -> Unit
 pub async fn Responder::send_text(Self, String, status? : Int32, headers? : &ToHeaders) -> Unit
 pub async fn Responder::send_void(Self, status? : Int32, headers? : &ToHeaders) -> Unit
 pub async fn Responder::upgrade(Self, Request) -> @websocket.Conn

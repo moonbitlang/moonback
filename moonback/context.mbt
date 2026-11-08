@@ -1,6 +1,8 @@
 ///|
 struct Context {
   app : App
+  mut mount_prefix_template : String
+  mut route_template : StringView?
   mut conn_info : ConnectionInfo
   mut committed : Bool
   mut userdata : @immut/sorted_map.SortedMap[Int32, TypedBox]
@@ -18,6 +20,8 @@ priv enum ConnectionInfo {
 fn Context::new(app : App, conn_info : ConnectionInfo) -> Context {
   {
     app,
+    mount_prefix_template: "",
+    route_template: None,
     committed: false,
     conn_info,
     userdata: @immut/sorted_map.SortedMap::new(),

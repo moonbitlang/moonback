@@ -49,8 +49,29 @@ async fn AppInst::dispatch_request(
   res : Responder,
 ) -> Unit {
   let handler = match self.router.route(req.meth, req.path) {
-    None => default_handler
-    Some({ handler, params, }) => (req, res) => handler({ ..req, params, }, res)
+    None => {
+      req.ctx.route_template = None
+      default_handler
+    }
+    Some({ handler, template, params, }) => {
+      req.ctx.route_template = match template {
+        None => None
+        Some(template) => {
+          let prefix = req.ctx.mount_prefix_template
+          if prefix.is_empty() {
+            Some(template)
+          } else {
+            let path = if template.has_prefix("/") {
+              template.to_owned()
+            } else {
+              "/" + template.to_owned()
+            }
+            Some((prefix + path)[:])
+          }
+        }
+      }
+      (req, res) => handler({ ..req, params, }, res)
+    }
   }
   Middleware::chain(self.middlewares)(handler)(req, res)
 }
